@@ -69,7 +69,7 @@ natural_kernel_type <- "cauchy"
 anthropogenic_kernel_type <- "cauchy"
 natural_dir <- "NONE"
 anthropogenic_dir <- "NONE"
-number_of_iterations <- 100
+number_of_iterations <- 10
 number_of_cores <- NA
 pesticide_duration <- 0
 pesticide_efficacy <- 1
@@ -142,7 +142,7 @@ data <- PoPS::pops_multirun(infected_file,
                       output_frequency,
                       output_frequency_n,
                       movements_file, 
-                      use_movements,
+                      use_movement,
                       start_exposed,
                       generate_stochasticity,
                       establishment_stochasticity,
