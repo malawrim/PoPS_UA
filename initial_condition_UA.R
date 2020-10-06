@@ -62,11 +62,10 @@ precipitation_coefficient_file <- ""
 model_type <- "SI"
 latency_period <- 0
 
-## TODO ##
 time_step <- "month"
 start_date <- '2003-01-01'
 end_date <- '2003-12-31'
-## ##
+
 season_month_start <- 1
 season_month_end <- 12
 use_lethal_temperature <- FALSE
@@ -166,25 +165,25 @@ data <- PoPS::pops_multirun(infected_file,
                       establishment_probability,
                       dispersal_percentage)
 
-data <- PoPS::pops(
-  infected_file, 
-  host_file, 
-  total_populations_file,
-  parameter_means,
-  parameter_cov_matrix
-)
-
-temp_coefficient_file <- system.file("extdata", "simple2x2", "temperature_coefficient.tif", package = "PoPS")
-temp <- raster(temp_coefficient_file)
-plot(temp$temperature_coefficient)
-
-temp_coefficient_days <- system.file("extdata", "simple2x2", "temperature_coefficient_days.tif", package = "PoPS")
-temp_days <- raster(temp_coefficient_days)
-plot(temp_days)
-
-temp_coefficient_weeks <- system.file("extdata", "simple2x2", "temperature_coefficient_weeks.tif", package = "PoPS")
-temp_weeks <- raster(temp_coefficient_weeks)
-plot(temp_weeks)
+# data <- PoPS::pops(
+#   infected_file, 
+#   host_file, 
+#   total_populations_file,
+#   parameter_means,
+#   parameter_cov_matrix
+# )
+# 
+# temp_coefficient_file <- system.file("extdata", "simple2x2", "temperature_coefficient.tif", package = "PoPS")
+# temp <- raster(temp_coefficient_file)
+# plot(temp$temperature_coefficient)
+# 
+# temp_coefficient_days <- system.file("extdata", "simple2x2", "temperature_coefficient_days.tif", package = "PoPS")
+# temp_days <- raster(temp_coefficient_days)
+# plot(temp_days)
+# 
+# temp_coefficient_weeks <- system.file("extdata", "simple2x2", "temperature_coefficient_weeks.tif", package = "PoPS")
+# temp_weeks <- raster(temp_coefficient_weeks)
+# plot(temp_weeks)
 # record results in numeric vector
 
 # call sobol_indices with results from pops_multirun
