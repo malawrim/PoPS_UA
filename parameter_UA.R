@@ -1,14 +1,14 @@
 library(PoPS)
 library(raster)
-#on each loop get new temp/host/precip/etc map
+# on each loop get new temp/host/precip/etc map
 
 # create needed inputs (Rasters)
 # all constants #
-#pull precip & temp data from noaa ** randomize day **
+# pull precip & temp data from noaa ** randomize day **
 download.file("ftp://ftp.cpc.ncep.noaa.gov/GIS/USDM_Products/temp/total/daily/t.full.1stday_month_20130611.tif", "temp.tif", "auto", mode = "wb")
 download.file("ftp://ftp.cpc.ncep.noaa.gov/GIS/USDM_Products/precip/total/daily/p.full.1stday_month_20130611.tif", "precip.tif", "auto", mode = "wb")
 
-#import temp and precip data
+# import temp and precip data
 tif_name <- 'temp.tif'
 temp <- raster(tif_name, layer=0)
 
@@ -22,6 +22,7 @@ plot(temp)
 tif_name <- 'precip.tif'
 precip <- raster(tif_name, layer=0)
 
+# SOD projection: +proj=utm +zone=10 +datum=WGS84 +units=m +no_defs 
 
 # call sobol_matrices or create own matrix
 

@@ -5,10 +5,8 @@ library(raster)
 # create needed inputs (Rasters)
 # all constants #
 
-infected_file <- system.file
-
 #give input maps same extent and projection as temp & precip
-infected <- NLMR::nlm_random(20,20,100,TRUE)
+infected <- NLMR::nlm_random(30,30,1,TRUE)
 values(infected) <- values(infected) * 0
 crs(infected) <- "+proj=longlat +datum=WGS84 +no_defs"
 writeRaster(infected, "infected_file.tif", overwrite=TRUE)
@@ -19,21 +17,24 @@ values(host) <- values(host) * 5
 crs(host) <- crs(infected)
 extent(host) <- extent(infected)
 
-
 host_sd <- NLMR::nlm_random(20,20,100,TRUE)
 crs(host_sd) <- crs(host)
 extent(host_sd) <- extent(host)
 
 host_stack <- stack(host, host_sd)
-
 plot(host_stack)
 crs(host_stack) <- crs(host)
 extent(host_stack) <- extent(host)
-writeRaster(host_stack, "host_file.tif", overwrite=TRUE)
+
+ex <- landscapemetrics::landscape
+plot(ex)
+crs(ex) <- crs(infected)
+extent(ex) <- extent(infected)
+res(ex) <- 1
+writeRaster(ex, "host_file.tif", overwrite=TRUE)
 host_file <- "host_file.tif"
 
-## TODO should total_populations be created from infected and/or host? ##
-total_populations <- host
+total_populations <- ex
 writeRaster(total_populations, "total_populations_file.tif", overwrite=TRUE)
 total_populations_file <- "total_populations_file.tif"
 
@@ -69,7 +70,7 @@ natural_kernel_type <- "cauchy"
 anthropogenic_kernel_type <- "cauchy"
 natural_dir <- "NONE"
 anthropogenic_dir <- "NONE"
-number_of_iterations <- 10
+number_of_iterations <- 5
 number_of_cores <- NA
 pesticide_duration <- 0
 pesticide_efficacy <- 1
@@ -91,17 +92,17 @@ use_spreadrates <- FALSE
 # call sobol_matrices or create own matrix
 # since the only thing we are altering for initial condition is std-dev of
 # infected then matrix shouldn't be necessary?
-infected_file <-  system.file("extdata", "simple20x20", "initial_infection.tif", package = "PoPS")
-host_file <- system.file("extdata", "simple20x20", "host.tif", package = "PoPS")
-total_populations_file <- system.file("extdata", "simple20x20", "all_plants.tif", package = "PoPS")
-total_populations_file <- system.file("extdata", "simple20x20", "host.tif", package = "PoPS")
+infected_file <-  system.file("extdata", "SODexample", "initial_infections.tif", package = "PoPS")
+host_file <- system.file("extdata", "SODexample", "host.tif", package = "PoPS")
+#total_populations_file <- system.file("extdata", "simple20x20", "all_plants.tif", package = "PoPS")
+total_populations_file <- system.file("extdata", "SODexample", "all_plants.tif", package = "PoPS")
 
-infected <- raster(infected_file)
-plot(infected)
-host <- raster(host_file)
-plot(host)
-total_pop <- raster(total_populations_file)
-plot(total_pop)
+infected_SOD <- raster(infected_file)
+plot(infected_SOD)
+host_SOD <- raster(host_file)
+plot(host_SOD)
+total_pop_SOD <- raster(total_populations_file)
+plot(total_pop_SOD)
 # call pops_multirun
 data <- PoPS::pops_multirun(infected_file, 
                       host_file, 
@@ -159,6 +160,17 @@ data <- PoPS::pops(
   parameter_cov_matrix
 )
 
+temp_coefficient_file <- system.file("extdata", "simple2x2", "temperature_coefficient.tif", package = "PoPS")
+temp <- raster(temp_coefficient_file)
+plot(temp$temperature_coefficient)
+
+temp_coefficient_days <- system.file("extdata", "simple2x2", "temperature_coefficient_days.tif", package = "PoPS")
+temp_days <- raster(temp_coefficient_days)
+plot(temp_days)
+
+temp_coefficient_weeks <- system.file("extdata", "simple2x2", "temperature_coefficient_weeks.tif", package = "PoPS")
+temp_weeks <- raster(temp_coefficient_weeks)
+plot(temp_weeks)
 # record results in numeric vector
 
 # call sobol_indices with results from pops_multirun
