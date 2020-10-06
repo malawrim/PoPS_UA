@@ -6,37 +6,51 @@ library(raster)
 # all constants #
 
 #give input maps same extent and projection as temp & precip
-infected <- NLMR::nlm_random(30,30,1,TRUE)
-values(infected) <- values(infected) * 0
-crs(infected) <- "+proj=longlat +datum=WGS84 +no_defs"
+#infected <- NLMR::nlm_random(30,30,1,TRUE)
+#values(infected) <- values(infected) * 0
+#crs(infected) <- "+proj=longlat +datum=WGS84 +no_defs"
+
+infected <- raster(nrows=10, ncols=10, xmn=0, ymn=0, 
+                   crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
+                   vals=stats::rnorm(16200, mean=4, sd=1))
 writeRaster(infected, "infected_file.tif", overwrite=TRUE)
 infected_file <- "infected_file.tif"
 
-host <- NLMR::nlm_random(20,20,100,TRUE)
-values(host) <- values(host) * 5
-crs(host) <- crs(infected)
-extent(host) <- extent(infected)
-
-host_sd <- NLMR::nlm_random(20,20,100,TRUE)
-crs(host_sd) <- crs(host)
-extent(host_sd) <- extent(host)
-
-host_stack <- stack(host, host_sd)
-plot(host_stack)
-crs(host_stack) <- crs(host)
-extent(host_stack) <- extent(host)
-
-ex <- landscapemetrics::landscape
-plot(ex)
-crs(ex) <- crs(infected)
-extent(ex) <- extent(infected)
-res(ex) <- 1
-writeRaster(ex, "host_file.tif", overwrite=TRUE)
+host <- raster(nrows=10, ncols=10, xmn=0, ymn=0, 
+                   crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
+                   vals=stats::rnorm(16200, mean=4, sd=1))
+writeRaster(host, "host_file.tif", overwrite=TRUE)
 host_file <- "host_file.tif"
 
-total_populations <- ex
+total_populations <- host
 writeRaster(total_populations, "total_populations_file.tif", overwrite=TRUE)
 total_populations_file <- "total_populations_file.tif"
+
+#host <- NLMR::nlm_random(20,20,100,TRUE)
+#values(host) <- values(host) * 5
+#crs(host) <- crs(infected)
+#extent(host) <- extent(infected)
+
+#host_sd <- NLMR::nlm_random(20,20,100,TRUE)
+#crs(host_sd) <- crs(host)
+#extent(host_sd) <- extent(host)
+
+#host_stack <- stack(host, host_sd)
+#plot(host_stack)
+#crs(host_stack) <- crs(host)
+#extent(host_stack) <- extent(host)
+
+#ex <- landscapemetrics::landscape
+#plot(ex)
+#crs(ex) <- crs(infected)
+#extent(ex) <- extent(infected)
+#res(ex) <- 1
+#writeRaster(ex, "host_file.tif", overwrite=TRUE)
+#host_file <- "host_file.tif"
+
+#total_populations <- ex
+#writeRaster(total_populations, "total_populations_file.tif", overwrite=TRUE)
+#total_populations_file <- "total_populations_file.tif"
 
 parameter_means <- read.csv("2018_2019_means.csv")$X
 parameter_cov_matrix  <- read.csv("2018_2019_cov_matrix.csv")
@@ -92,17 +106,17 @@ use_spreadrates <- FALSE
 # call sobol_matrices or create own matrix
 # since the only thing we are altering for initial condition is std-dev of
 # infected then matrix shouldn't be necessary?
-infected_file <-  system.file("extdata", "SODexample", "initial_infections.tif", package = "PoPS")
-host_file <- system.file("extdata", "SODexample", "host.tif", package = "PoPS")
+#infected_file <-  system.file("extdata", "SODexample", "initial_infections.tif", package = "PoPS")
+#host_file <- system.file("extdata", "SODexample", "host.tif", package = "PoPS")
 #total_populations_file <- system.file("extdata", "simple20x20", "all_plants.tif", package = "PoPS")
-total_populations_file <- system.file("extdata", "SODexample", "all_plants.tif", package = "PoPS")
+#total_populations_file <- system.file("extdata", "SODexample", "all_plants.tif", package = "PoPS")
 
-infected_SOD <- raster(infected_file)
-plot(infected_SOD)
-host_SOD <- raster(host_file)
-plot(host_SOD)
-total_pop_SOD <- raster(total_populations_file)
-plot(total_pop_SOD)
+#infected_SOD <- raster(infected_file)
+#plot(infected_SOD)
+#host_SOD <- raster(host_file)
+#plot(host_SOD)
+#total_pop_SOD <- raster(total_populations_file)
+#plot(total_pop_SOD)
 # call pops_multirun
 data <- PoPS::pops_multirun(infected_file, 
                       host_file, 
