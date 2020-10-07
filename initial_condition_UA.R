@@ -1,30 +1,34 @@
 library(PoPS)
 library(raster)
-#on each loop get new temp/host/precip/etc map
+#on each loop get new host/precip/etc map
 
 # create needed inputs (Rasters)
-# all constants #
 
 #give input maps same extent and projection as temp & precip
 #infected <- NLMR::nlm_random(30,30,1,TRUE)
 #values(infected) <- values(infected) * 0
 #crs(infected) <- "+proj=longlat +datum=WGS84 +no_defs"
 
-infected <- raster(nrows=10, ncols=10, xmn=0, ymn=0, 
+infected <- raster(nrows=2, ncols=2, xmn=0, ymn=0, 
                    crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
-                   vals=stats::rnorm(16200, mean=4, sd=1))
+                   vals=0)
 writeRaster(infected, "infected_file.tif", overwrite=TRUE)
 infected_file <- "infected_file.tif"
+plot(infected)
 
-host <- raster(nrows=10, ncols=10, xmn=0, ymn=0, 
+host <- raster(nrows=2, ncols=2, xmn=0, ymn=0, 
                    crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
-                   vals=stats::rnorm(16200, mean=4, sd=1))
+                   vals=as.integer(stats::rnorm(16200, mean=4, sd=1)))
 writeRaster(host, "host_file.tif", overwrite=TRUE)
 host_file <- "host_file.tif"
+plot(host)
 
-total_populations <- host
+total_populations <- raster(nrows=2, ncols=2, xmn=0, ymn=0, 
+                            crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
+                            vals=9)
 writeRaster(total_populations, "total_populations_file.tif", overwrite=TRUE)
 total_populations_file <- "total_populations_file.tif"
+plot(total_populations)
 
 #host <- NLMR::nlm_random(20,20,100,TRUE)
 #values(host) <- values(host) * 5
@@ -52,8 +56,25 @@ total_populations_file <- "total_populations_file.tif"
 #writeRaster(total_populations, "total_populations_file.tif", overwrite=TRUE)
 #total_populations_file <- "total_populations_file.tif"
 
-parameter_means <- read.csv("2018_2019_means.csv")$X
-parameter_cov_matrix  <- read.csv("2018_2019_cov_matrix.csv")
+# all constants #
+# parameter_means <- c(3.313078428,
+#                      57.03366593,
+#                      0.941242767,
+#                      4963.682729,
+#                      2.796831052,
+#                      0)
+# parameter_cov_matrix  <- matrix(c(0.144292294, -3.911033814, 0.000450695, 2.039942284, 0.032322356, 0.0,
+#                                   -3.911033814, 313.9397359, 0.056492955, 1625.147409, 0.479571377, 0.0,
+#                                   0.000450695, 0.056492955, 0.000237303, 2.40730576, -0.000701542, 0.0,
+#                                   2.039942284, 1625.147409, 2.40730576, 1537363.495, 15.24267777, 0.0,
+#                                   0.032322356, 0.479571377, -0.000701542, 15.24267777, 1.416991282, 0.0,
+#                                   0, 0, 0, 0, 0, 0.0), nrow=6, ncol=6)
+# parameter_cov_matrix <- t(parameter_cov_matrix)
+
+# parameter_means <- c(1.8, 16.4, 0.973, 7803, 0, 0)
+# parameter_cov_matrix <- matrix(ncol = 6, nrow = 6, 0)
+parameter_means <- read.csv("2016_2017_means.csv")$x
+parameter_cov_matrix  <- read.csv("2016_2017_cov_matrix.csv")
 
 temp <- FALSE
 temperature_coefficient_file <- ""
@@ -91,7 +112,7 @@ random_seed <- NULL
 output_frequency <- "year"
 output_frequency_n <- 1
 movements_file <- ""
-use_movement <- FALSE
+use_movements <- FALSE
 start_exposed <- FALSE
 generate_stochasticity <- FALSE
 establishment_stochasticity <- FALSE
@@ -105,17 +126,17 @@ use_spreadrates <- FALSE
 # call sobol_matrices or create own matrix
 # since the only thing we are altering for initial condition is std-dev of
 # infected then matrix shouldn't be necessary?
-#infected_file <-  system.file("extdata", "SODexample", "initial_infections.tif", package = "PoPS")
-#host_file <- system.file("extdata", "SODexample", "host.tif", package = "PoPS")
-#total_populations_file <- system.file("extdata", "simple20x20", "all_plants.tif", package = "PoPS")
-#total_populations_file <- system.file("extdata", "SODexample", "all_plants.tif", package = "PoPS")
-
-#infected_SOD <- raster(infected_file)
-#plot(infected_SOD)
-#host_SOD <- raster(host_file)
-#plot(host_SOD)
-#total_pop_SOD <- raster(total_populations_file)
-#plot(total_pop_SOD)
+# infected_file <-  system.file("extdata", "SODexample", "initial_infections.tif", package = "PoPS")
+# host_file <- system.file("extdata", "SODexample", "host.tif", package = "PoPS")
+# #total_populations_file <- system.file("extdata", "simple20x20", "all_plants.tif", package = "PoPS")
+# total_populations_file <- system.file("extdata", "SODexample", "host.tif", package = "PoPS")
+# 
+# infected_SOD <- raster(infected_file)
+# plot(infected_SOD)
+# host_SOD <- raster(host_file)
+# plot(host_SOD)
+# total_pop_SOD <- raster(total_populations_file)
+# plot(total_pop_SOD)
 # call pops_multirun
 data <- PoPS::pops_multirun(infected_file, 
                       host_file, 
@@ -140,14 +161,14 @@ data <- PoPS::pops_multirun(infected_file,
                       mortality_on, 
                       mortality_rate, 
                       mortality_time_lag, 
-                      management, 
+                      management,
                       treatment_dates, 
                       treatments_file,
                       treatment_method,
                       natural_kernel_type, 
                       anthropogenic_kernel_type,
                       natural_dir, 
-                      anthropogenic_dir, 
+                      anthropogenic_dir,
                       number_of_iterations, 
                       number_of_cores,
                       pesticide_duration,
@@ -156,7 +177,7 @@ data <- PoPS::pops_multirun(infected_file,
                       output_frequency,
                       output_frequency_n,
                       movements_file, 
-                      use_movement,
+                      use_movements,
                       start_exposed,
                       generate_stochasticity,
                       establishment_stochasticity,
@@ -165,13 +186,13 @@ data <- PoPS::pops_multirun(infected_file,
                       establishment_probability,
                       dispersal_percentage)
 
-# data <- PoPS::pops(
-#   infected_file, 
-#   host_file, 
-#   total_populations_file,
-#   parameter_means,
-#   parameter_cov_matrix
-# )
+data <- PoPS::pops(
+  infected_file,
+  host_file,
+  total_populations_file,
+  parameter_means,
+  parameter_cov_matrix
+)
 # 
 # temp_coefficient_file <- system.file("extdata", "simple2x2", "temperature_coefficient.tif", package = "PoPS")
 # temp <- raster(temp_coefficient_file)

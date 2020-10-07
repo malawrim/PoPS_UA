@@ -10,14 +10,15 @@ download.file("ftp://ftp.cpc.ncep.noaa.gov/GIS/USDM_Products/precip/total/daily/
 
 # import temp and precip data
 tif_name <- 'temp.tif'
-temp <- raster(tif_name, layer=0)
+temp <- raster(tif_name, values=TRUE)
+values(temp2)
 
 download.file("ftp://ftp.cpc.ncep.noaa.gov/GIS/USDM_Products/temp/total/daily/t.full.1stday_month_20130612.tif", "temp2.tif", "auto", mode = "wb")
 tif_name <- 'temp2.tif'
 temp2 <- raster(tif_name, layer=0)
 
 temp_merge <- merge(temp, temp2)
-plot(temp)
+plot(temp2)
 
 tif_name <- 'precip.tif'
 precip <- raster(tif_name, layer=0)
