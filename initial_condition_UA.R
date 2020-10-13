@@ -25,9 +25,20 @@ library(raster)
 infected <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
                    crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                    vals=as.integer(stats::rnorm(16200, mean=4, sd=1)))
-
+values(infected) <- values(infected) * 0.125
+values(infected) <- round(values(infected), 0)
 plot(infected)
-writeRaster(infected, "infected_file.tif", overwrite=TRUE)
+# writeRaster(infected, "infected_file.tif", overwrite=TRUE)
+
+infected_sd <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
+                   crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
+                   vals=0.5)
+plot(infected_sd)
+infected_stack <- stack(infected, infected_sd)
+infected_brick <- brick(infected_stack)
+plot(infected_brick)
+infected_file <- writeRaster(infected_brick, "infected_file.tif", format="GTiff", overwrite=TRUE)
+plot(infected_file)
 infected_file <- "infected_file.tif"
 
 host <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
@@ -111,7 +122,7 @@ natural_kernel_type <- "cauchy"
 anthropogenic_kernel_type <- "cauchy"
 natural_dir <- "NONE"
 anthropogenic_dir <- "NONE"
-number_of_iterations <- 50
+number_of_iterations <- 10
 number_of_cores <- NA
 pesticide_duration <- 0
 pesticide_efficacy <- 1
@@ -134,7 +145,7 @@ use_spreadrates <- FALSE
 # since the only thing we are altering for initial condition is std-dev of
 # infected then matrix shouldn't be necessary?
 
-data <- PoPS::pops_multirun(infected_file, 
+data_1_new <- PoPS::pops_multirun(infected_file, 
                       host_file, 
                       total_populations_file,
                       parameter_means,
@@ -196,4 +207,5 @@ data <- PoPS::pops_multirun(infected_file,
 # record results in numeric vector
 
 # call sobol_indices with results from pops_multirun
+
 
