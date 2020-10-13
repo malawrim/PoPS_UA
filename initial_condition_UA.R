@@ -24,15 +24,15 @@ library(raster)
 
 infected <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
                    crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
-                   vals=as.integer(stats::rnorm(16200, mean=4, sd=1)))
-values(infected) <- values(infected) * 0.125
+                   vals=as.integer(stats::rnorm(16200, mean=0, sd=2)))
+infected[infected < 0] <- 0
 values(infected) <- round(values(infected), 0)
 plot(infected)
 # writeRaster(infected, "infected_file.tif", overwrite=TRUE)
-
+# probably don't want sd randomized #
 infected_sd <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
                    crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
-                   vals=0.5)
+                   vals=runif(1, min=0, max=1))
 plot(infected_sd)
 infected_stack <- stack(infected, infected_sd)
 infected_brick <- brick(infected_stack)
@@ -193,6 +193,11 @@ data_1_new <- PoPS::pops_multirun(infected_file,
                       establishment_probability,
                       dispersal_percentage)
 
+# save(data_1, file="data_1.RData")
+# save(data_sd1, file="data_sd1.RData")
+# save(data_sd0, file='data_sd0.RData')
+# save(data_sd0.5, file="data_sd0.5.RData")
+
 # temp_coefficient_file <- system.file("extdata", "simple2x2", "temperature_coefficient.tif", package = "PoPS")
 # temp <- raster(temp_coefficient_file)
 # plot(temp$temperature_coefficient)
@@ -206,6 +211,25 @@ data_1_new <- PoPS::pops_multirun(infected_file,
 # plot(temp_weeks)
 # record results in numeric vector
 
-# call sobol_indices with results from pops_multirun
+pops_output <- matrix(c(4.5, 6.7, 9.0, 10.0, 12.3, 3.2, 6.7, 9.1), ncol=2, byrow=FALSE)
+pops_params <- c("V1", "V2")
+pops_n <- 2
+pops_R <- 100
 
+library(sensobol)
+# # Define settings:
+# n <- 1000 #sample size of the sample matrix.
+# # k <- 8
+# R <- 100 #number of bootstrap replicas.
+# # Design the sample matrix:
+# A <- sobol_matrices(n = n, k = k, second = TRUE, third = TRUE)
+# # Compute the model output:
+# Y <- sobol_Fun(A)
+# # Compute the Sobol' indices:
+# sens <- sobol_indices(Y = Y, params = colnames(data.frame(A)),
+#                       R = R, n = n, parallel = "no", ncpus = 1, second = TRUE, third = TRUE)
+sens <- sobol_indices(Y = pops_output, params = pops_params,
+                      R = pops_R, n = pops_n, parallel = "no", ncpus = 1, second = TRUE, third = TRUE)
+
+# call sobol_indices with results from pops_multirun
 
