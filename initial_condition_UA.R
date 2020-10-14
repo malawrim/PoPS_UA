@@ -1,13 +1,46 @@
 library(PoPS)
 library(raster)
-#on each loop get new host/precip/etc map
+
+# create matrix of potential sd inputs for infected
+# inputs duplicated below
+# sample size
+pops_n <- 8
+# number of inputs
+pops_k <- 2
+# # matrix is of size n * 2k
+pops_matrices <- sobol_matrices(n = pops_n, k = pops_k, second = FALSE, third = FALSE)
+pops_matrices[1,1]
+l <- pops_n * 2* pops_k
+count <- c(1:l)
+for ( i in count ) {
+  # set sd to this
+  infected <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
+                     crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
+                     vals=as.integer(stats::rnorm(16200, mean=0, sd=2)))
+  infected[infected < 0] <- 0
+  values(infected) <- round(values(infected), 0)
+  # plot(infected)
+  # writeRaster(infected, "infected_file.tif", overwrite=TRUE)
+  # probably don't want sd randomized #
+  infected_sd <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
+                        crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
+                        vals=pops_matrices[i,1])
+  # plot(infected_sd)
+  infected_stack <- stack(infected, infected_sd)
+  infected_brick <- brick(infected_stack)
+  # plot(infected_brick)
+  infected_file <- writeRaster(infected_brick, "infected_file.tif", format="GTiff", overwrite=TRUE)
+  # plot(infected_file)
+  infected_file <- "infected_file.tif"
+}
+# on each loop get new host/precip/etc map
 
 # create needed inputs (Rasters)
 
-#give input maps same extent and projection as temp & precip
-#infected <- NLMR::nlm_random(30,30,1,TRUE)
-#values(infected) <- values(infected) * 0
-#crs(infected) <- "+proj=longlat +datum=WGS84 +no_defs"
+# give input maps same extent and projection as temp & precip
+# infected <- NLMR::nlm_random(30,30,1,TRUE)
+# values(infected) <- values(infected) * 0
+# crs(infected) <- "+proj=longlat +datum=WGS84 +no_defs"
 
 # infected_file <-  system.file("extdata", "SODexample", "initial_infections.tif", package = "PoPS")
 # host_file <- system.file("extdata", "SODexample", "host.tif", package = "PoPS")
@@ -55,31 +88,31 @@ writeRaster(total_populations, "total_populations_file.tif", overwrite=TRUE)
 total_populations_file <- "total_populations_file.tif"
 plot(total_populations)
 
-#host <- NLMR::nlm_random(20,20,100,TRUE)
-#values(host) <- values(host) * 5
-#crs(host) <- crs(infected)
-#extent(host) <- extent(infected)
-
-#host_sd <- NLMR::nlm_random(20,20,100,TRUE)
-#crs(host_sd) <- crs(host)
-#extent(host_sd) <- extent(host)
-
-#host_stack <- stack(host, host_sd)
-#plot(host_stack)
-#crs(host_stack) <- crs(host)
-#extent(host_stack) <- extent(host)
-
-#ex <- landscapemetrics::landscape
-#plot(ex)
-#crs(ex) <- crs(infected)
-#extent(ex) <- extent(infected)
-#res(ex) <- 1
-#writeRaster(ex, "host_file.tif", overwrite=TRUE)
-#host_file <- "host_file.tif"
-
-#total_populations <- ex
-#writeRaster(total_populations, "total_populations_file.tif", overwrite=TRUE)
-#total_populations_file <- "total_populations_file.tif"
+# host <- NLMR::nlm_random(20,20,100,TRUE)
+# values(host) <- values(host) * 5
+# crs(host) <- crs(infected)
+# extent(host) <- extent(infected)
+# 
+# host_sd <- NLMR::nlm_random(20,20,100,TRUE)
+# crs(host_sd) <- crs(host)
+# extent(host_sd) <- extent(host)
+# 
+# host_stack <- stack(host, host_sd)
+# plot(host_stack)
+# crs(host_stack) <- crs(host)
+# extent(host_stack) <- extent(host)
+# 
+# ex <- landscapemetrics::landscape
+# plot(ex)
+# crs(ex) <- crs(infected)
+# extent(ex) <- extent(infected)
+# res(ex) <- 1
+# writeRaster(ex, "host_file.tif", overwrite=TRUE)
+# host_file <- "host_file.tif"
+# 
+# total_populations <- ex
+# writeRaster(total_populations, "total_populations_file.tif", overwrite=TRUE)
+# total_populations_file <- "total_populations_file.tif"
 
 parameter_means <- c(2.55, 1.45, 1, 0, 0, 0)
 parameter_cov_matrix <- matrix(ncol = 6, nrow = 6, 0)
@@ -211,25 +244,32 @@ data_1_new <- PoPS::pops_multirun(infected_file,
 # plot(temp_weeks)
 # record results in numeric vector
 
-pops_output <- matrix(c(4.5, 6.7, 9.0, 10.0, 12.3, 3.2, 6.7, 9.1), ncol=2, byrow=FALSE)
+pops_output <- c(4.5, 19996.7, -9.0, 10.0, -912.3, 0.2, 6.7, 99.1)
 pops_params <- c("V1", "V2")
-pops_n <- 2
+pops_n <- 28
+pops_k <- 2
 pops_R <- 100
 
+# call sobol_indices with results from pops_multirun
 library(sensobol)
 # # Define settings:
 # n <- 1000 #sample size of the sample matrix.
-# # k <- 8
+# k <- 8
 # R <- 100 #number of bootstrap replicas.
 # # Design the sample matrix:
 # A <- sobol_matrices(n = n, k = k, second = TRUE, third = TRUE)
+
 # # Compute the model output:
 # Y <- sobol_Fun(A)
 # # Compute the Sobol' indices:
 # sens <- sobol_indices(Y = Y, params = colnames(data.frame(A)),
 #                       R = R, n = n, parallel = "no", ncpus = 1, second = TRUE, third = TRUE)
-sens <- sobol_indices(Y = pops_output, params = pops_params,
-                      R = pops_R, n = pops_n, parallel = "no", ncpus = 1, second = TRUE, third = TRUE)
+pops_sens <- sobol_indices(Y = pops_output, params = pops_params, type= "saltelli",
+                      R = pops_R, n = pops_n, parallel = "no", ncpus = 1, second = FALSE, third = FALSE)
 
-# call sobol_indices with results from pops_multirun
+# # compute confidence intervals
+# sobol_ci(sens, params = colnames(data.frame(A)), type = "norm", conf = 0.95)
+# only works with 2+ params
+sobol_ci(sens, params = pops_params, type = "norm", conf = 0.95, second = FALSE, third = FALSE)
+
 
