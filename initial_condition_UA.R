@@ -1,15 +1,17 @@
 library(PoPS)
 library(raster)
+# call sobol_indices with results from pops_multirun
+library(sensobol)
 
 # create matrix of potential sd inputs for infected
 # inputs duplicated below
 # sample size
-pops_n <- 8
+pops_n <- 4
 # number of inputs
 pops_k <- 2
 # # matrix is of size n * 2k
+# matrix should be created in respect to pdf of param
 pops_matrices <- sobol_matrices(n = pops_n, k = pops_k, second = FALSE, third = FALSE)
-pops_matrices[1,1]
 l <- pops_n * 2 * pops_k
 count <- c(1:l)
 
@@ -64,7 +66,7 @@ for ( i in count ) {
                  vals=as.integer(stats::rnorm(16200, mean=4, sd=1)))
   host_sd <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
                         crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
-                        vals=pops_matrices[i,1])
+                        vals=pops_matrices[i,2])
   # plot(host_sd)
   host_stack <- stack(host, host_sd)
   host_brick <- brick(host_stack)
@@ -224,7 +226,7 @@ for ( i in count ) {
   # maybe just use these?
   # both have mean and standard deviation
   # order: number of infected mean, number of infected sd, area infected mean, area infected sd
-  data_list[[1]] <- c(data$number_infecteds[1], data$number_infecteds[2], data$infected_areas[1], data$infected_areas[2])
+  data_list[[i]] <- c(data$number_infecteds[1], data$number_infecteds[2], data$infected_areas[1], data$infected_areas[2])
 
   # save(data_1, file="data_1.RData")
   # save(data_sd1, file="data_sd1.RData")
@@ -244,14 +246,16 @@ for ( i in count ) {
   # plot(temp_weeks)
   # record results in numeric vector
 }
-pops_output <- c(4.5, 19996.7, -9.0, 10.0, -912.3, 0.2, 6.7, 99.1)
-pops_params <- c("V1", "V2")
-pops_n <- 28
-pops_k <- 2
-pops_R <- 100
+matrix_data_list <- matrix(unlist(data_list), nrow=length(data_list), byrow=TRUE)
 
-# call sobol_indices with results from pops_multirun
-library(sensobol)
+pops_output <- matrix_data_list[,2]
+pops_params <- c("infected", "host")
+# sample size - number of runs
+pops_n <- 4
+pops_k <- 2
+# number of bootstrap replicas
+pops_R <- 5000
+
 # # Define settings:
 # n <- 1000 #sample size of the sample matrix.
 # k <- 8
@@ -271,6 +275,6 @@ pops_sens <- sobol_indices(Y = pops_output, params = pops_params, type= "saltell
 # # compute confidence intervals
 # sobol_ci(sens, params = colnames(data.frame(A)), type = "norm", conf = 0.95)
 # only works with 2+ params
-sobol_ci(sens, params = pops_params, type = "norm", conf = 0.95, second = FALSE, third = FALSE)
+pops_ci <- sobol_ci(sens, params = pops_params, type = "norm", conf = 0.95, second = FALSE, third = FALSE)
 
 
