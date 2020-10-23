@@ -265,6 +265,7 @@ pops_R <- 5000
 
 # # Compute the model output:
 # Y <- sobol_Fun(A)
+plot_uncertainty(pops_output, pops_n)
 # # Compute the Sobol' indices:
 # sens <- sobol_indices(Y = Y, params = colnames(data.frame(A)),
 #                       R = R, n = n, parallel = "no", ncpus = 1, second = TRUE, third = TRUE)
@@ -272,9 +273,15 @@ pops_R <- 5000
 pops_sens <- sobol_indices(Y = pops_output, params = pops_params, type= "saltelli",
                       R = pops_R, n = pops_n, parallel = "no", ncpus = 1, second = FALSE, third = FALSE)
 
+#pops_replicas <- sobol_replicas(pops_sens, pops_k, second=FALSE, third=FALSE)
+
+pops_dummy <- sobol_dummy(pops_output, pops_params, pops_R, pops_n)
+pops_dummy_ci <- sobol_ci_dummy(pops_dummy, type= "norm", conf = 0.95)
 # # compute confidence intervals
 # sobol_ci(sens, params = colnames(data.frame(A)), type = "norm", conf = 0.95)
 # only works with 2+ params
 pops_ci <- sobol_ci(sens, params = pops_params, type = "norm", conf = 0.95, second = FALSE, third = FALSE)
 
+plot_scatter(pops_matrices, pops_output, pops_n, pops_params)
 
+plot_sobol(pops_ci, dummy = pops_dummy_ci, type = 1)
