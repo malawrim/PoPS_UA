@@ -248,7 +248,7 @@ for ( i in count ) {
 }
 matrix_data_list <- matrix(unlist(data_list), nrow=length(data_list), byrow=TRUE)
 
-pops_output <- matrix_data_list[,2]
+pops_output <- matrix_data_list[,1]
 pops_params <- c("infected", "host")
 # sample size - number of runs
 pops_n <- 4
@@ -280,7 +280,7 @@ pops_dummy_ci <- sobol_ci_dummy(pops_dummy, type= "norm", conf = 0.95)
 # # compute confidence intervals
 # sobol_ci(sens, params = colnames(data.frame(A)), type = "norm", conf = 0.95)
 # only works with 2+ params
-pops_ci <- sobol_ci(sens, params = pops_params, type = "norm", conf = 0.95, second = FALSE, third = FALSE)
+pops_ci <- sobol_ci(pops_sens, params = pops_params, type = "norm", conf = 0.95, second = FALSE, third = FALSE)
 
 plot_scatter(pops_matrices, pops_output, pops_n, pops_params)
 
