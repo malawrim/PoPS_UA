@@ -12,7 +12,7 @@ pops_k <- 2
 # # matrix is of size n * 2k
 # matrix should be created in respect to pdf of param
 pops_matrices <- sobol_matrices(n = pops_n, k = pops_k, second = FALSE, third = FALSE)
-l <- pops_n * 2 * pops_k
+l <- pops_n * (2 + pops_k)
 count <- c(1:l)
 
 data_list <- list(list())
