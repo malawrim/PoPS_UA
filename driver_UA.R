@@ -62,7 +62,7 @@ natural_kernel_type <- "cauchy"
 anthropogenic_kernel_type <- "cauchy"
 natural_dir <- "NONE"
 anthropogenic_dir <- "NONE"
-number_of_iterations <- 10
+number_of_iterations <- 2
 number_of_cores <- NA
 
 random_seed <- NULL
@@ -122,22 +122,21 @@ for ( i in count ) {
   mortality_on <- TRUE
   mortality_rate <- pops_matrices[i,3]
   # multiply time lag by number of years simulation - needs to be greater than 1
-  num_years <- 1
+  num_years <- 10
   mortality_time_lag <- pops_matrices[i,4] * num_years
 
   management <- TRUE
-  treatment_dates <- rep("2003-01-01", 12)
+  treatment_dates <- c("2003-01-01")
   # one layer per timestep (0 or 1)
   treatment <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
                    crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                    vals=1)
-  treatment_stack <- stack(treatment, treatment, treatment, treatment, treatment, treatment, treatment, treatment, treatment, treatment, treatment, treatment)
   
-  treatments_raster <- writeRaster(treatment_stack, "treatments_file.tif", type= "GTIFF", overwrite=TRUE)
-  treatments_file <- rep("treatments_file.tif", 12)
+  treatments_raster <- writeRaster(treatment, "treatments_file.tif", overwrite=TRUE)
+  treatments_file <- c("treatments_file.tif")
   treatment_method <- "ratio"
   # may just keep constant to match timestep of treatments
-  pesticide_duration <- rep(1, 12)
+  pesticide_duration <- c(1)
   pesticide_efficacy <- pops_matrices[i,5]
   
   # call sobol_matrices or create own matrix
