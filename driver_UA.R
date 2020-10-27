@@ -11,9 +11,9 @@ pops_n <- 4
 pops_k <- 5
 # matrix is of size n * 2k
 # matrix should be created in respect to pdf of param
-pops_matrices <- sobol_matrices(n = pops_n, k = pops_k, second = FALSE, third = FALSE)
+pops_matrices <- sobol_matrices(n = pops_n, k = pops_k, second = TRUE, third = TRUE)
 l <- pops_n * (2 + pops_k)
-count <- c(1:l)
+count <- c(1:108)
 
 data_list <- list(list())
 # access element in 2D list data_list[[1]][1]
@@ -207,7 +207,7 @@ for ( i in count ) {
 matrix_data_list <- matrix(unlist(data_list), nrow=length(data_list), byrow=TRUE)
 
 pops_output <- matrix_data_list[,1]
-pops_params <- c("infected", "host")
+pops_params <- c("temp", "precip", "mortality_rate", "mortality_time_lag", "pesticide_efficacy")
 
 # number of bootstrap replicas
 pops_R <- 5000
