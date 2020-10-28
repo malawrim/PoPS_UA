@@ -6,14 +6,14 @@ library(sensobol)
 # create matrix of potential sd inputs for infected
 # inputs duplicated below
 # sample size
-pops_n <- 4
+pops_n <- 10
 # number of inputs
 pops_k <- 5
 # matrix is of size n * 2k
 # matrix should be created in respect to pdf of param
 pops_matrices <- sobol_matrices(n = pops_n, k = pops_k, second = TRUE, third = TRUE)
 l <- pops_n * (2 + pops_k)
-count <- c(1:108)
+count <- c(1:10)
 
 data_list <- list(list())
 # access element in 2D list data_list[[1]][1]
@@ -62,7 +62,7 @@ natural_kernel_type <- "cauchy"
 anthropogenic_kernel_type <- "cauchy"
 natural_dir <- "NONE"
 anthropogenic_dir <- "NONE"
-number_of_iterations <- 2
+number_of_iterations <- 5
 number_of_cores <- NA
 
 random_seed <- NULL
@@ -81,6 +81,24 @@ quarantine_areas_file <- ""
 use_quarantine <- FALSE
 use_spreadrates <- FALSE
 
+param_on_off <- matrix(c(FALSE, FALSE, FALSE, FALSE,
+                         TRUE, FALSE, FALSE, FALSE,
+                         FALSE, TRUE, FALSE, FALSE,
+                         FALSE, FALSE, TRUE, FALSE,
+                         FALSE, FALSE, FALSE, TRUE,
+                         TRUE, TRUE, FALSE, FALSE,
+                         TRUE, FALSE, TRUE, FALSE,
+                         TRUE, FALSE, FALSE, TRUE,
+                         FALSE, TRUE, TRUE, FALSE,
+                         FALSE, TRUE, FALSE, TRUE,
+                         FALSE, FALSE, TRUE, TRUE,
+                         TRUE, TRUE, TRUE, FALSE,
+                         TRUE, TRUE, FALSE, TRUE,
+                         TRUE, FALSE, TRUE, TRUE,
+                         FALSE, TRUE, TRUE, TRUE,
+                         TRUE, TRUE, TRUE, TRUE), nrow=16, ncol=4, byrow=TRUE)
+
+
 for ( i in count ) {
   # download.file("ftp://ftp.cpc.ncep.noaa.gov/GIS/USDM_Products/temp/total/daily/t.full.1stday_month_20130611.tif", "temp.tif", "auto", mode = "wb")
   # download.file("ftp://ftp.cpc.ncep.noaa.gov/GIS/USDM_Products/precip/total/daily/p.full.1stday_month_20130611.tif", "precip.tif", "auto", mode = "wb")
@@ -88,11 +106,11 @@ for ( i in count ) {
   # # import temp and precip data
   # tif_name <- 'temp.tif'
   # temp <- raster(tif_name, values=TRUE)
-  temp <- TRUE
+  temp <- FALSE
   temp_raster <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
                     crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                     vals=pops_matrices[i,1])
-  temp_stack <- stack(temp_raster, temp_raster, temp_raster, temp_raster, temp_raster, temp_raster, temp_raster, temp_raster, temp_raster, temp_raster, temp_raster, temp_raster)
+  temp_stack <- stack(replicate(12, temp_raster))
   temp_file <- writeRaster(temp_stack, "temp_file.tif", type= "GTIFF", overwrite=TRUE)
   temperature_coefficient_file <- 'temp_file.tif'
   # values(temp2)
@@ -110,8 +128,8 @@ for ( i in count ) {
   precip_raster <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
                  crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                  vals=pops_matrices[i,2])
-  precip_stack <- stack(precip_raster, precip_raster, precip_raster, precip_raster, precip_raster, precip_raster, precip_raster, precip_raster, precip_raster, precip_raster, precip_raster, precip_raster)
-  precip_file <- writeRaster(precip_raster, "precip_file.tif", type= "GTIFF", overwrite=TRUE)
+  precip_stack <- stack(replicate(12, precip_raster))
+  precip_file <- writeRaster(precip_stack, "precip_file.tif", type= "GTIFF", overwrite=TRUE)
   precipitation_coefficient_file <- 'precip_file.tif'
   
   use_lethal_temperature <- FALSE
@@ -119,13 +137,16 @@ for ( i in count ) {
   temperature_file <- ""
   lethal_temperature <- -12.87
   lethal_temperature_month <- 1
-  mortality_on <- TRUE
+  mortality_on <- FALSE
   mortality_rate <- pops_matrices[i,3]
   # multiply time lag by number of years simulation - needs to be greater than 1
   num_years <- 10
   mortality_time_lag <- pops_matrices[i,4] * num_years
+  if(mortality_time_lag < 1) {
+    mortality_time_lag <- mortality_time_lag * 10
+  }
 
-  management <- TRUE
+  management <- FALSE
   treatment_dates <- c("2003-01-01")
   # one layer per timestep (0 or 1)
   treatment <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
@@ -216,7 +237,7 @@ plot_uncertainty(pops_output, pops_n)
 # Compute the Sobol' indices:
 # will have to separate indices for each of the four results in the output list (num infect mean vs sd)
 pops_sens <- sobol_indices(Y = pops_output, params = pops_params, type= "saltelli",
-                           R = pops_R, n = pops_n, parallel = "no", ncpus = 1, second = FALSE, third = FALSE)
+                           R = pops_R, n = pops_n, parallel = "no", ncpus = 1, second = TRUE, third = TRUE)
 
 # pops_replicas <- sobol_replicas(pops_sens, pops_k, second=FALSE, third=FALSE)
 
