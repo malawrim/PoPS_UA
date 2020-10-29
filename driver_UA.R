@@ -3,17 +3,24 @@ library(raster)
 # call sobol_indices with results from pops_multirun
 library(sensobol)
 
+on_off <- function(num) {
+  if ( num <= 0.5) {
+    return(TRUE)
+  }
+  return(FALSE)
+}
+
 # create matrix of potential sd inputs for infected
 # inputs duplicated below
 # sample size
-pops_n <- 10
+pops_n <- 16
 # number of inputs
-pops_k <- 5
+pops_k <- 10
 # matrix is of size n * 2k
 # matrix should be created in respect to pdf of param
 pops_matrices <- sobol_matrices(n = pops_n, k = pops_k, second = TRUE, third = TRUE)
 l <- pops_n * (2 + pops_k)
-count <- c(1:10)
+count <- c(1:16)
 
 data_list <- list(list())
 # access element in 2D list data_list[[1]][1]
@@ -106,12 +113,12 @@ for ( i in count ) {
   # # import temp and precip data
   # tif_name <- 'temp.tif'
   # temp <- raster(tif_name, values=TRUE)
-  temp <- FALSE
+  temp <- on_off(pops_matrices[i,5])
   temp_raster <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
                     crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                     vals=pops_matrices[i,1])
   temp_stack <- stack(replicate(12, temp_raster))
-  temp_file <- writeRaster(temp_stack, "temp_file.tif", type= "GTIFF", overwrite=TRUE)
+  writeRaster(temp_stack, "temp_file.tif", type= "GTIFF", overwrite=TRUE)
   temperature_coefficient_file <- 'temp_file.tif'
   # values(temp2)
   # 
@@ -124,41 +131,46 @@ for ( i in count ) {
   # 
   # tif_name <- 'precip.tif'
   # precip <- raster(tif_name, layer=0)
-  precip <- TRUE
+  precip <- on_off(pops_matrices[i,7])
   precip_raster <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
                  crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                  vals=pops_matrices[i,2])
   precip_stack <- stack(replicate(12, precip_raster))
-  precip_file <- writeRaster(precip_stack, "precip_file.tif", type= "GTIFF", overwrite=TRUE)
+  writeRaster(precip_stack, "precip_file.tif", type= "GTIFF", overwrite=TRUE)
   precipitation_coefficient_file <- 'precip_file.tif'
   
-  use_lethal_temperature <- FALSE
+  use_lethal_temperature <- on_off(pops_matrices[i,8])
   # min temp map
-  temperature_file <- ""
-  lethal_temperature <- -12.87
+  min_temp_raster <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
+                          crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
+                          vals=pops_matrices[i,3])
+  min_temp_stack <- stack(replicate(12, min_temp_raster))
+  writeRaster(min_temp_stack, "min_temperature_file.tif", type= "GTIFF", overwrite=TRUE)
+  temperature_file <- "min_temperature_file.tif"
+  lethal_temperature <- -10
   lethal_temperature_month <- 1
-  mortality_on <- FALSE
-  mortality_rate <- pops_matrices[i,3]
+  mortality_on <- on_off(pops_matrices[i,9])
+  mortality_rate <- pops_matrices[i,4]
   # multiply time lag by number of years simulation - needs to be greater than 1
   num_years <- 10
-  mortality_time_lag <- pops_matrices[i,4] * num_years
+  mortality_time_lag <- pops_matrices[i,5] * num_years
   if(mortality_time_lag < 1) {
     mortality_time_lag <- mortality_time_lag * 10
   }
 
-  management <- FALSE
+  management <- on_off(pops_matrices[i,10])
   treatment_dates <- c("2003-01-01")
   # one layer per timestep (0 or 1)
   treatment <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
                    crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                    vals=1)
   
-  treatments_raster <- writeRaster(treatment, "treatments_file.tif", overwrite=TRUE)
+  writeRaster(treatment, "treatments_file.tif", overwrite=TRUE)
   treatments_file <- c("treatments_file.tif")
   treatment_method <- "ratio"
   # may just keep constant to match timestep of treatments
   pesticide_duration <- c(1)
-  pesticide_efficacy <- pops_matrices[i,5]
+  pesticide_efficacy <- pops_matrices[i,6]
   
   # call sobol_matrices or create own matrix
   # since the only thing we are altering for initial condition is std-dev of
