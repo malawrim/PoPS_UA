@@ -72,12 +72,17 @@ for ( i in count ) {
   writeRaster(total_populations, "total_populations_file.tif", overwrite=TRUE)
   total_populations_file <- "total_populations_file.tif"
   # plot(total_populations)
+  # max minimum temperature
+  max_dispersal_distance <- 30
+  # min minimum temperature
+  min_dispersal_distance <- 1
+  # de-normalize the time lag value from pops_matrices
   
   parameter_means <- c(
     pops_matrices[i,1],
-    pops_matrices[i,2],
+    (pops_matrices[i,2] * (max_dispersal_distance - min_dispersal_distance) + min_dispersal_distance),
     pops_matrices[i,3],
-    pops_matrices[i,4],
+    (pops_matrices[i,4] * (max_dispersal_distance - min_dispersal_distance) + min_dispersal_distance),
     0,
     0)
   # leave all in cov_matrix as zero (no previous years data)
@@ -211,36 +216,41 @@ for ( i in count ) {
 }
 matrix_data_list <- matrix(unlist(data_list), nrow=length(data_list), byrow=TRUE)
 
-pops_output <- matrix_data_list[,1]
 pops_params <- c("reproductive_rate", "natural_dispersal_distance", "percent_natural_dispersal",
                   "anthropogenic_dispersal_distance")
-
-# # Define settings:
-# n <- 1000 #sample size of the sample matrix.
-# k <- 8
-# R <- 100 #number of bootstrap replicas.
-# # Design the sample matrix:
-# A <- sobol_matrices(n = n, k = k, second = TRUE, third = TRUE)
-
-# # Compute the model output:
-# Y <- sobol_Fun(A)
-plot_uncertainty(pops_output, pops_n)
-# # Compute the Sobol' indices:
-# sens <- sobol_indices(Y = Y, params = colnames(data.frame(A)),
-#                       R = R, n = n, parallel = "no", ncpus = 1, second = TRUE, third = TRUE)
-# will have to separate indices for each of the four results in the output list (num infect mean vs sd)
-pops_sens <- sobol_indices(Y = pops_output, params = pops_params, type= "saltelli",
-                           R = pops_R, n = pops_n, parallel = "no", ncpus = 1, second = FALSE, third = FALSE)
-
-#pops_replicas <- sobol_replicas(pops_sens, pops_k, second=FALSE, third=FALSE)
-
-pops_dummy <- sobol_dummy(pops_output, pops_params, pops_R, pops_n)
-pops_dummy_ci <- sobol_ci_dummy(pops_dummy, type= "norm", conf = 0.95)
-# # compute confidence intervals
-# sobol_ci(sens, params = colnames(data.frame(A)), type = "norm", conf = 0.95)
-# only works with 2+ params
-pops_ci <- sobol_ci(pops_sens, params = pops_params, type = "norm", conf = 0.95, second = FALSE, third = FALSE)
-
-plot_scatter(pops_matrices, pops_output, pops_n, pops_params)
-
-plot_sobol(pops_ci, dummy = pops_dummy_ci, type = 1)
+params <- c(1:4)
+indices <- list(data.frame())
+pops_dummy <- list(data.frame())
+pops_dummy_ci <- list(data.frame())
+pops_ci <- list(data.frame())
+# number of bootstrap replicas
+pops_R <- 5000
+for ( i in params ) {
+  pops_output <- matrix_data_list[,i]
+  
+  plot_name <- paste("pot_uncertainty_", i,".jpg", sep="")
+  jpeg(file = plot_name)
+  plot_uncertainty(pops_output, pops_n)
+  dev.off()
+  
+  # Compute the Sobol' indices:
+  # will have to separate indices for each of the four results in the output list (num infect mean vs sd)
+  indices[[i]] <- sobol_indices(Y = pops_output, params = pops_params, type= "saltelli",
+                                R = pops_R, n = pops_n, parallel = "no", ncpus = 1, second = FALSE, third = FALSE)
+  
+  # pops_replicas <- sobol_replicas(pops_sens, pops_k, second=FALSE, third=FALSE)
+  pops_dummy[[i]] <- sobol_dummy(pops_output, pops_params, pops_R, pops_n)
+  pops_dummy_ci[[i]] <- sobol_ci_dummy(pops_dummy, type= "norm", conf = 0.95)
+  # compute confidence intervals
+  # only works with 2+ params
+  pops_ci[[i]] <- sobol_ci(pops_sens, params = pops_params, type = "norm", conf = 0.95, second = FALSE, third = FALSE)
+  plot_name_1 <- paste("pot_scatter_", i,".jpg", sep="")
+  jpeg(file = plot_name_1)
+  plot_scatter(pops_matrices, pops_output, pops_n, pops_params)
+  dev.off()
+  
+  plot_name_2 <- paste("pot_sobol_", i,".jpg", sep="")
+  jpeg(file = plot_name_2)
+  plot_sobol(pops_ci, dummy = pops_dummy_ci, type = 1)
+  dev.off()
+}

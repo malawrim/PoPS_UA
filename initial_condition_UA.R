@@ -3,6 +3,67 @@ library(raster)
 # call sobol_indices with results from pops_multirun
 library(sensobol)
 
+parameter_means <- c(2.55, 1.45, 1, 0, 0, 0)
+parameter_cov_matrix <- matrix(ncol = 6, nrow = 6, 0)
+parameter_cov_matrix[1,1] <- 2.921333
+parameter_cov_matrix[2,1] <- 8.265058
+parameter_cov_matrix[1,2] <- 8.265058
+parameter_cov_matrix[2,2] <- 23.469279
+# parameter_means <- read.csv("means_control.csv")
+# parameter_means <- c(unlist(parameter_means, use.names=FALSE))
+# 
+# parameter_cov_matrix <- read.csv("cov_control.csv")
+# parameter_cov_matrix <- matrix(unlist(parameter_cov_matrix), ncol = 6, byrow = TRUE)
+# parameter_cov_matrix <- t(parameter_cov_matrix)
+# parameter_cov_matrix <- parameter_cov_matrix[,-1]
+temp <- FALSE
+temperature_coefficient_file <- ""
+precip <- FALSE
+precipitation_coefficient_file <- ""
+model_type <- "SI"
+latency_period <- 0
+
+time_step <- "month"
+start_date <- '2003-01-01'
+end_date <- '2003-12-31'
+
+season_month_start <- 1
+season_month_end <- 12
+use_lethal_temperature <- FALSE
+temperature_file <- ""
+lethal_temperature <- -12.87
+lethal_temperature_month <- 1
+mortality_on <- FALSE
+mortality_rate <- 0
+mortality_time_lag <- 0
+management <- FALSE
+treatment_dates <- c(0)
+treatments_file <- ""
+treatment_method <- "ratio"
+natural_kernel_type <- "cauchy"
+anthropogenic_kernel_type <- "cauchy"
+natural_dir <- "NONE"
+anthropogenic_dir <- "NONE"
+number_of_iterations <- 10
+number_of_cores <- NA
+pesticide_duration <- 0
+pesticide_efficacy <- 1
+random_seed <- NULL
+output_frequency <- "year"
+output_frequency_n <- 1
+movements_file <- ""
+use_movements <- FALSE
+start_exposed <- FALSE
+generate_stochasticity <- FALSE
+establishment_stochasticity <- FALSE
+movement_stochasticity <- FALSE
+deterministic <- TRUE
+establishment_probability <- 0.5
+dispersal_percentage <- 0.99
+quarantine_areas_file <- ""
+use_quarantine <- FALSE
+use_spreadrates <- FALSE
+
 # create matrix of potential sd inputs for infected
 # inputs duplicated below
 # sample size
@@ -108,66 +169,6 @@ for ( i in count ) {
   # writeRaster(total_populations, "total_populations_file.tif", overwrite=TRUE)
   # total_populations_file <- "total_populations_file.tif"
   
-  parameter_means <- c(2.55, 1.45, 1, 0, 0, 0)
-  parameter_cov_matrix <- matrix(ncol = 6, nrow = 6, 0)
-  parameter_cov_matrix[1,1] <- 2.921333
-  parameter_cov_matrix[2,1] <- 8.265058
-  parameter_cov_matrix[1,2] <- 8.265058
-  parameter_cov_matrix[2,2] <- 23.469279
-  # parameter_means <- read.csv("means_control.csv")
-  # parameter_means <- c(unlist(parameter_means, use.names=FALSE))
-  # 
-  # parameter_cov_matrix <- read.csv("cov_control.csv")
-  # parameter_cov_matrix <- matrix(unlist(parameter_cov_matrix), ncol = 6, byrow = TRUE)
-  # parameter_cov_matrix <- t(parameter_cov_matrix)
-  # parameter_cov_matrix <- parameter_cov_matrix[,-1]
-  temp <- FALSE
-  temperature_coefficient_file <- ""
-  precip <- FALSE
-  precipitation_coefficient_file <- ""
-  model_type <- "SI"
-  latency_period <- 0
-  
-  time_step <- "month"
-  start_date <- '2003-01-01'
-  end_date <- '2003-12-31'
-  
-  season_month_start <- 1
-  season_month_end <- 12
-  use_lethal_temperature <- FALSE
-  temperature_file <- ""
-  lethal_temperature <- -12.87
-  lethal_temperature_month <- 1
-  mortality_on <- FALSE
-  mortality_rate <- 0
-  mortality_time_lag <- 0
-  management <- FALSE
-  treatment_dates <- c(0)
-  treatments_file <- ""
-  treatment_method <- "ratio"
-  natural_kernel_type <- "cauchy"
-  anthropogenic_kernel_type <- "cauchy"
-  natural_dir <- "NONE"
-  anthropogenic_dir <- "NONE"
-  number_of_iterations <- 10
-  number_of_cores <- NA
-  pesticide_duration <- 0
-  pesticide_efficacy <- 1
-  random_seed <- NULL
-  output_frequency <- "year"
-  output_frequency_n <- 1
-  movements_file <- ""
-  use_movements <- FALSE
-  start_exposed <- FALSE
-  generate_stochasticity <- FALSE
-  establishment_stochasticity <- FALSE
-  movement_stochasticity <- FALSE
-  deterministic <- TRUE
-  establishment_probability <- 0.5
-  dispersal_percentage <- 0.99
-  quarantine_areas_file <- ""
-  use_quarantine <- FALSE
-  use_spreadrates <- FALSE
   # call sobol_matrices or create own matrix
   # since the only thing we are altering for initial condition is std-dev of
   # infected then matrix shouldn't be necessary?
@@ -248,40 +249,41 @@ for ( i in count ) {
 }
 matrix_data_list <- matrix(unlist(data_list), nrow=length(data_list), byrow=TRUE)
 
-pops_output <- matrix_data_list[,1]
 pops_params <- c("infected", "host")
-# sample size - number of runs
-pops_n <- 4
-pops_k <- 2
+
+params <- c(1:2)
+indices <- list(data.frame())
+pops_dummy <- list(data.frame())
+pops_dummy_ci <- list(data.frame())
+pops_ci <- list(data.frame())
 # number of bootstrap replicas
 pops_R <- 5000
-
-# # Define settings:
-# n <- 1000 #sample size of the sample matrix.
-# k <- 8
-# R <- 100 #number of bootstrap replicas.
-# # Design the sample matrix:
-# A <- sobol_matrices(n = n, k = k, second = TRUE, third = TRUE)
-
-# # Compute the model output:
-# Y <- sobol_Fun(A)
-plot_uncertainty(pops_output, pops_n)
-# # Compute the Sobol' indices:
-# sens <- sobol_indices(Y = Y, params = colnames(data.frame(A)),
-#                       R = R, n = n, parallel = "no", ncpus = 1, second = TRUE, third = TRUE)
-# will have to separate indices for each of the four results in the output list (num infect mean vs sd)
-pops_sens <- sobol_indices(Y = pops_output, params = pops_params, type= "saltelli",
-                      R = pops_R, n = pops_n, parallel = "no", ncpus = 1, second = FALSE, third = FALSE)
-
-#pops_replicas <- sobol_replicas(pops_sens, pops_k, second=FALSE, third=FALSE)
-
-pops_dummy <- sobol_dummy(pops_output, pops_params, pops_R, pops_n)
-pops_dummy_ci <- sobol_ci_dummy(pops_dummy, type= "norm", conf = 0.95)
-# # compute confidence intervals
-# sobol_ci(sens, params = colnames(data.frame(A)), type = "norm", conf = 0.95)
-# only works with 2+ params
-pops_ci <- sobol_ci(pops_sens, params = pops_params, type = "norm", conf = 0.95, second = FALSE, third = FALSE)
-
-plot_scatter(pops_matrices, pops_output, pops_n, pops_params)
-
-plot_sobol(pops_ci, dummy = pops_dummy_ci, type = 1)
+for ( i in params ) {
+  pops_output <- matrix_data_list[,i]
+  
+  plot_name <- paste("pot_uncertainty_", i,".jpg", sep="")
+  jpeg(file = plot_name)
+  plot_uncertainty(pops_output, pops_n)
+  dev.off()
+  
+  # Compute the Sobol' indices:
+  # will have to separate indices for each of the four results in the output list (num infect mean vs sd)
+  indices[[i]] <- sobol_indices(Y = pops_output, params = pops_params, type= "saltelli",
+                                R = pops_R, n = pops_n, parallel = "no", ncpus = 1, second = FALSE, third = FALSE)
+  
+  # pops_replicas <- sobol_replicas(pops_sens, pops_k, second=FALSE, third=FALSE)
+  pops_dummy[[i]] <- sobol_dummy(pops_output, pops_params, pops_R, pops_n)
+  pops_dummy_ci[[i]] <- sobol_ci_dummy(pops_dummy, type= "norm", conf = 0.95)
+  # compute confidence intervals
+  # only works with 2+ params
+  pops_ci[[i]] <- sobol_ci(pops_sens, params = pops_params, type = "norm", conf = 0.95, second = FALSE, third = FALSE)
+  plot_name_1 <- paste("pot_scatter_", i,".jpg", sep="")
+  jpeg(file = plot_name_1)
+  plot_scatter(pops_matrices, pops_output, pops_n, pops_params)
+  dev.off()
+  
+  plot_name_2 <- paste("pot_sobol_", i,".jpg", sep="")
+  jpeg(file = plot_name_2)
+  plot_sobol(pops_ci, dummy = pops_dummy_ci, type = 1)
+  dev.off()
+}
