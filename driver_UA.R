@@ -1,19 +1,23 @@
+# install.packages("devtools")
+library(devtools)
+# devtools::install_github("ncsu-landscape-dynamics/rpops", ref = "v1.0.2")
 library(PoPS)
+# install.packages("raster")
 library(raster)
 # call sobol_indices with results from pops_multirun
+# install.packages("sensobol")
 library(sensobol)
 
 # create matrix of potential sd inputs for infected
 # inputs duplicated below
 # sample size
-pops_n <- 16
+pops_n <- 1000
 # number of inputs
-pops_k <- 10
+pops_k <- 5
 # matrix is of size n * 2k
 # matrix should be created in respect to pdf of param
 pops_matrices <- sobol_matrices(n = pops_n, k = pops_k, second = TRUE, third = TRUE)
-l <- pops_n * (2 + pops_k)
-count <- c(1:16)
+count <- c(1:nrow(pops_matrices))
 
 data_list <- list(list())
 # access element in 2D list data_list[[1]][1]
