@@ -131,7 +131,7 @@ for ( i in count ) {
                  vals=as.integer(stats::rnorm(16200, mean=4, sd=1)))
   host_sd <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
                         crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
-                        vals=pops_matrices[i,2])
+                        vals=0)
   # plot(host_sd)
   host_stack <- stack(host, host_sd)
   host_brick <- brick(host_stack)

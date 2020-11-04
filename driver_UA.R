@@ -13,7 +13,7 @@ library(sensobol)
 # sample size
 pops_n <- 1000
 # number of inputs
-pops_k <- 5
+pops_k <- 10
 # matrix is of size n * 2k
 # matrix should be created in respect to pdf of param
 pops_matrices <- sobol_matrices(n = pops_n, k = pops_k, second = TRUE, third = TRUE)
@@ -32,14 +32,6 @@ values(infected) <- round(values(infected), 0)
 writeRaster(infected, "infected_file.tif", overwrite=TRUE)
 # plot(infected_file)
 infected_file <- "infected_file.tif"
-
-host <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
-               crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
-               vals=as.integer(stats::rnorm(16200, mean=4, sd=1)))
-# plot(host)
-host_file <- writeRaster(host, "host_file.tif", overwrite=TRUE)
-# plot(host_file)
-host_file <- "host_file.tif"
 
 total_populations <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
                             crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
@@ -66,7 +58,7 @@ natural_kernel_type <- "cauchy"
 anthropogenic_kernel_type <- "cauchy"
 natural_dir <- "NONE"
 anthropogenic_dir <- "NONE"
-number_of_iterations <- 5
+number_of_iterations <- 10
 number_of_cores <- NA
 
 random_seed <- NULL
@@ -103,13 +95,27 @@ use_spreadrates <- FALSE
 #                          TRUE, TRUE, TRUE, TRUE), nrow=16, ncol=4, byrow=TRUE)
 
 for ( i in count ) {
+  
+  host <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
+                 crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
+                 vals=as.integer(stats::rnorm(16200, mean=4, sd=1)))
+  host_sd <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
+                    crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
+                    vals=pops_matrices[i,1])
+  # plot(host_sd)
+  host_stack <- stack(host, host_sd)
+  host_brick <- brick(host_stack)
+  # plot(host_brick)
+  host_file <- writeRaster(host_brick, "host_file.tif", format="GTiff", overwrite=TRUE)
+  # plot(host_file)
+  host_file <- "host_file.tif"
   # download.file("ftp://ftp.cpc.ncep.noaa.gov/GIS/USDM_Products/temp/total/daily/t.full.1stday_month_20130611.tif", "temp.tif", "auto", mode = "wb")
   # download.file("ftp://ftp.cpc.ncep.noaa.gov/GIS/USDM_Products/precip/total/daily/p.full.1stday_month_20130611.tif", "precip.tif", "auto", mode = "wb")
   # 
   # # import temp and precip data
   # tif_name <- 'temp.tif'
   # temp <- raster(tif_name, values=TRUE)
-  temp <-  as.logical(round(pops_matrices[i,5]))
+  temp <-  as.logical(round(pops_matrices[i,2]))
   temp_raster <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
                     crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                     vals=runif(16200, 0, 1))
@@ -127,7 +133,7 @@ for ( i in count ) {
   # 
   # tif_name <- 'precip.tif'
   # precip <- raster(tif_name, layer=0)
-  precip <-  as.logical(round(pops_matrices[i,7]))
+  precip <-  as.logical(round(pops_matrices[i,3]))
   precip_raster <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
                  crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                  vals=runif(16200, 0, 1))
@@ -135,7 +141,7 @@ for ( i in count ) {
   writeRaster(precip_stack, "precip_file.tif", type= "GTIFF", overwrite=TRUE)
   precipitation_coefficient_file <- 'precip_file.tif'
   
-  use_lethal_temperature <-  as.logical(round(pops_matrices[i,8]))
+  use_lethal_temperature <-  as.logical(round(pops_matrices[i,4]))
   # min temp map
   # max minimum temperature
   max_min_temp <- 0
@@ -144,25 +150,25 @@ for ( i in count ) {
   # denormalize the time lag value from pops_matrices
   min_temp_raster <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
                           crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
-                          vals=(pops_matrices[i,3] * (max_min_temp - min_min_temp) + min_min_temp))
+                          vals=(pops_matrices[i,5] * (max_min_temp - min_min_temp) + min_min_temp))
   min_temp_stack <- stack(replicate(12, min_temp_raster))
   writeRaster(min_temp_stack, "min_temperature_file.tif", type= "GTIFF", overwrite=TRUE)
   temperature_file <- "min_temperature_file.tif"
   lethal_temperature <- -10
   lethal_temperature_month <- 1
-  mortality_on <- as.logical(round(pops_matrices[i,9]))
-  mortality_rate <- pops_matrices[i,4]
+  mortality_on <- as.logical(round(pops_matrices[i,6]))
+  mortality_rate <- pops_matrices[i,7]
   # max lag = max years of simulation run
   max_years <- 2
   # min is always 1
   min_years <- 1 
   # denormalize the time lag value from pops_matrices
-  mortality_time_lag <- pops_matrices[i,5] * (max_years - min_years) + min_years
+  mortality_time_lag <- pops_matrices[i,8] * (max_years - min_years) + min_years
   if(mortality_time_lag < 1) {
     mortality_time_lag <- mortality_time_lag * 10
   }
 
-  management <-  as.logical(round(pops_matrices[i,10]))
+  management <-  as.logical(round(pops_matrices[i,9]))
   treatment_dates <- c("2003-01-01")
   # one layer per timestep (0 or 1)
   treatment <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
@@ -174,7 +180,7 @@ for ( i in count ) {
   treatment_method <- "ratio"
   # may just keep constant to match timestep of treatments
   pesticide_duration <- c(1)
-  pesticide_efficacy <- pops_matrices[i,6]
+  pesticide_efficacy <- pops_matrices[i,10]
   
   # call sobol_matrices or create own matrix
   # since the only thing we are altering for initial condition is std-dev of
