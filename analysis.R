@@ -50,7 +50,7 @@ number_of_observations <- 68
 prior_number_of_observations <- 0
 prior_means <- c(0, 0, 0, 0, 0, 0)    ### leave as 0 for now, means that you are giving them no weight
 prior_cov_matrix <- matrix(ncol = 6, nrow = 6, 0)
-params_to_estimate <- c(T, T, T, T, F, F)  ### 1st: reproductive rates, 2nd: natural distance, 3rd: percent natural, 4tH: anthropogenic distance, 5th Natural Kappa, 6th anthropogenic kappa
+params_to_estimate <- c(T, T, F, F, F, F)  ### 1st: reproductive rates, 2nd: natural distance, 3rd: percent natural, 4tH: anthropogenic distance, 5th Natural Kappa, 6th anthropogenic kappa
 number_of_generations <- 6
 generation_size <- 10
 checks = c(1200, 90000, 900, 1000)
@@ -61,7 +61,7 @@ mask <- NULL
 percent_natural_dispersal <- 1.0
 anthropogenic_distance_scale <- 0.0
 
-data_calibrate <- abc_calibration(infected_years_file, 
+data_calibrate <- calibrate(infected_years_file, 
                         number_of_observations, 
                         prior_number_of_observations,
                         prior_means, prior_cov_matrix, 
