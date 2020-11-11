@@ -7,6 +7,9 @@ library(raster)
 # call sobol_indices with results from pops_multirun
 # install.packages("sensobol")
 library(sensobol)
+library(foreach)
+library(doParallel)
+# library(parallel) - may not need
 
 parameter_means <- c(2.55, 1.45, 1, 0, 0, 0)
 parameter_cov_matrix <- matrix(ncol = 6, nrow = 6, 0)
@@ -78,13 +81,16 @@ pops_k <- 2
 # # matrix is of size n * 2k
 # matrix should be created in respect to pdf of param
 pops_matrices <- sobol_matrices(n = pops_n, k = pops_k, second = FALSE, third = FALSE)
-count <- c(1:nrow(pops_matrices))
+count <- nrow(pops_matrices)
 
-data_list <- list(list())
+list_output <- list(list())
 # access element in 2D list data_list[[1]][1]
 # access whole list in 2D list data_list[[1]]
+numCores <- detectCores()
+cl <- makeCluster(numCores - 1)
+registerDoParallel(cl)
+data_list <- foreach (i=1:count) %dopar% {
 
-for ( i in count ) {
   # on each loop get new host/precip/etc map
   
   # create needed inputs (Rasters)
@@ -107,45 +113,55 @@ for ( i in count ) {
   # plot(total_pop_SOD)
   # call pops_multirun
   
-  infected <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
+  infected <- raster::raster(nrows=100, ncols=100, xmn=0, ymn=0,
                      crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                      vals=as.integer(stats::rnorm(16200, mean=0, sd=2)))
   infected[infected < 0] <- 0
-  values(infected) <- round(values(infected), 0)
+  raster::values(infected) <- round(raster::values(infected), 0)
   # plot(infected)
   # writeRaster(infected, "infected_file.tif", overwrite=TRUE)
   # probably don't want sd randomized #
-  infected_sd <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
+  infected_sd <- raster::raster(nrows=100, ncols=100, xmn=0, ymn=0,
                         crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                         vals=pops_matrices[i,1])
   # plot(infected_sd)
-  infected_stack <- stack(infected, infected_sd)
-  infected_brick <- brick(infected_stack)
+  infected_stack <- raster::stack(infected, infected_sd)
+  infected_brick <- raster::brick(infected_stack)
+  infected_file <- paste("infected_file_", i, ".tif", sep="")
   # plot(infected_brick)
-  infected_file <- writeRaster(infected_brick, "infected_file.tif", format="GTiff", overwrite=TRUE)
+  raster::writeRaster(infected_brick, infected_file, format="GTiff", overwrite=TRUE)
   # plot(infected_file)
-  infected_file <- "infected_file.tif"
   
-  host <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
+  rm(infected)
+  rm(infected_sd)
+  rm(infected_stack)
+  rm(infected_brick)
+  
+  host <- raster::raster(nrows=100, ncols=100, xmn=0, ymn=0,
                  crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                  vals=as.integer(stats::rnorm(16200, mean=4, sd=1)))
-  host_sd <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
+  host_sd <- raster::raster(nrows=100, ncols=100, xmn=0, ymn=0,
                         crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                         vals=0)
   # plot(host_sd)
-  host_stack <- stack(host, host_sd)
-  host_brick <- brick(host_stack)
+  host_stack <- raster::stack(host, host_sd)
+  host_brick <- raster::brick(host_stack)
   # plot(host_brick)
-  host_file <- writeRaster(host_brick, "host_file.tif", format="GTiff", overwrite=TRUE)
+  host_file <- paste("host_file_", i, ".tif", sep="")
+  raster::writeRaster(host_brick, host_file, format="GTiff", overwrite=TRUE)
   # plot(host_file)
-  host_file <- "host_file.tif"
   
-  total_populations <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
+  rm(host)
+  rm(host_sd)
+  rm(host_stack)
+  rm(host_brick)
+  total_populations <- raster::raster(nrows=100, ncols=100, xmn=0, ymn=0,
                               crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                               vals=9)
-  writeRaster(total_populations, "total_populations_file.tif", overwrite=TRUE)
-  total_populations_file <- "total_populations_file.tif"
-  plot(total_populations)
+  total_populations_file <- paste("total_populations_file_", i, ".tif", sep="")
+  raster::writeRaster(total_populations, total_populations_file, overwrite=TRUE)
+  rm(total_populations)
+  # plot(total_populations)
   
   # host <- NLMR::nlm_random(20,20,100,TRUE)
   # values(host) <- values(host) * 5
@@ -225,32 +241,19 @@ for ( i in count ) {
                                     establishment_probability,
                                     dispersal_percentage)
   
+  file.remove(infected_file)
+  file.remove(host_file)
+  file.remove(total_populations_file)
+  
   # cellStats(data$simulation_mean, 'mean')
   # cellStats(data$simulation_sd, 'mean')
   
   # maybe just use these?
   # both have mean and standard deviation
   # order: number of infected mean, number of infected sd, area infected mean, area infected sd
-  data_list[[i]] <- c(data$number_infecteds[1], data$number_infecteds[2], data$infected_areas[1], data$infected_areas[2])
-
-  # save(data_1, file="data_1.RData")
-  # save(data_sd1, file="data_sd1.RData")
-  # save(data_sd0, file='data_sd0.RData')
-  # save(data_sd0.5, file="data_sd0.5.RData")
-  
-  # temp_coefficient_file <- system.file("extdata", "simple2x2", "temperature_coefficient.tif", package = "PoPS")
-  # temp <- raster(temp_coefficient_file)
-  # plot(temp$temperature_coefficient)
-  # 
-  # temp_coefficient_days <- system.file("extdata", "simple2x2", "temperature_coefficient_days.tif", package = "PoPS")
-  # temp_days <- raster(temp_coefficient_days)
-  # plot(temp_days)
-  # 
-  # temp_coefficient_weeks <- system.file("extdata", "simple2x2", "temperature_coefficient_weeks.tif", package = "PoPS")
-  # temp_weeks <- raster(temp_coefficient_weeks)
-  # plot(temp_weeks)
-  # record results in numeric vector
+  list_output[[i]] <- c(data$number_infecteds[1], data$number_infecteds[2], data$infected_areas[1], data$infected_areas[2])
 }
+stopCluster(cl)
 matrix_data_list <- matrix(unlist(data_list), nrow=length(data_list), byrow=TRUE)
 
 pops_params <- c("infected", "host")
@@ -265,7 +268,7 @@ pops_R <- 5000
 for ( i in params ) {
   pops_output <- matrix_data_list[,i]
   
-  plot_name <- paste("pot_uncertainty_", i,".jpg", sep="")
+  plot_name <- paste("plot_uncertainty_", i,".jpg", sep="")
   jpeg(file = plot_name)
   plot_uncertainty(pops_output, pops_n)
   dev.off()
@@ -277,17 +280,17 @@ for ( i in params ) {
   
   # pops_replicas <- sobol_replicas(pops_sens, pops_k, second=FALSE, third=FALSE)
   pops_dummy[[i]] <- sobol_dummy(pops_output, pops_params, pops_R, pops_n)
-  pops_dummy_ci[[i]] <- sobol_ci_dummy(pops_dummy, type= "norm", conf = 0.95)
+  pops_dummy_ci[[i]] <- sobol_ci_dummy(pops_dummy[[i]], type= "norm", conf = 0.95)
   # compute confidence intervals
   # only works with 2+ params
-  pops_ci[[i]] <- sobol_ci(pops_sens, params = pops_params, type = "norm", conf = 0.95, second = FALSE, third = FALSE)
-  plot_name_1 <- paste("pot_scatter_", i,".jpg", sep="")
+  pops_ci[[i]] <- sobol_ci(indices[[i]], params = pops_params, type = "norm", conf = 0.95, second = FALSE, third = FALSE)
+  plot_name_1 <- paste("plot_scatter_", i,".jpg", sep="")
   jpeg(file = plot_name_1)
   plot_scatter(pops_matrices, pops_output, pops_n, pops_params)
   dev.off()
   
-  plot_name_2 <- paste("pot_sobol_", i,".jpg", sep="")
+  plot_name_2 <- paste("plot_sobol_", i,".jpg", sep="")
   jpeg(file = plot_name_2)
-  plot_sobol(pops_ci, dummy = pops_dummy_ci, type = 1)
+  plot_sobol(pops_ci[[i]], dummy = pops_dummy_ci[[i]], type = 1)
   dev.off()
 }

@@ -7,6 +7,8 @@ library(raster)
 # call sobol_indices with results from pops_multirun
 # install.packages("sensobol")
 library(sensobol)
+library(foreach)
+library(doParallel)
 
 # create matrix of potential sd inputs for infected
 # inputs duplicated below
@@ -94,13 +96,15 @@ use_spreadrates <- FALSE
 # anthropogenic_dispersal_distance, natural kappa, and anthropogenic kappa
 # TODO kappas are zero
 pops_matrices <- sobol_matrices(n = pops_n, k = pops_k, second = TRUE, third = TRUE)
-count <- c(1:nrow(pops_matrices))
+count <- nrow(pops_matrices)
 
-data_list <- list(list())
+list_output <- list(list())
 # access element in 2D list data_list[[1]][1]
 # access whole list in 2D list data_list[[1]]
-
-for ( i in count ) {
+numCores <- detectCores()
+cl <- makeCluster(numCores - 1)
+registerDoParallel(cl)
+data_list <- foreach (i=1:count) %dopar% {
   # on each loop get new host/precip/etc map
   
   # create needed inputs (Rasters)
@@ -195,7 +199,7 @@ for ( i in count ) {
   # maybe just use these?
   # both have mean and standard deviation
   # order: number of infected mean, number of infected sd, area infected mean, area infected sd
-  data_list[[i]] <- c(data$number_infecteds[1], data$number_infecteds[2], data$infected_areas[1], data$infected_areas[2])
+  list_output[[i]] <- c(data$number_infecteds[1], data$number_infecteds[2], data$infected_areas[1], data$infected_areas[2])
   
   # save(data_1, file="data_1.RData")
   # save(data_sd1, file="data_sd1.RData")
@@ -214,7 +218,9 @@ for ( i in count ) {
   # temp_weeks <- raster(temp_coefficient_weeks)
   # plot(temp_weeks)
   # record results in numeric vector
+  
 }
+stopCluster(cl)
 matrix_data_list <- matrix(unlist(data_list), nrow=length(data_list), byrow=TRUE)
 
 pops_params <- c("reproductive_rate", "natural_dispersal_distance", "percent_natural_dispersal",
@@ -229,7 +235,7 @@ pops_R <- 5000
 for ( i in params ) {
   pops_output <- matrix_data_list[,i]
   
-  plot_name <- paste("pot_uncertainty_", i,".jpg", sep="")
+  plot_name <- paste("plot_uncertainty_", i,".jpg", sep="")
   jpeg(file = plot_name)
   plot_uncertainty(pops_output, pops_n)
   dev.off()
@@ -241,17 +247,17 @@ for ( i in params ) {
   
   # pops_replicas <- sobol_replicas(pops_sens, pops_k, second=FALSE, third=FALSE)
   pops_dummy[[i]] <- sobol_dummy(pops_output, pops_params, pops_R, pops_n)
-  pops_dummy_ci[[i]] <- sobol_ci_dummy(pops_dummy, type= "norm", conf = 0.95)
+  pops_dummy_ci[[i]] <- sobol_ci_dummy(pops_dummy[[i]], type= "norm", conf = 0.95)
   # compute confidence intervals
   # only works with 2+ params
-  pops_ci[[i]] <- sobol_ci(pops_sens, params = pops_params, type = "norm", conf = 0.95, second = FALSE, third = FALSE)
-  plot_name_1 <- paste("pot_scatter_", i,".jpg", sep="")
+  pops_ci[[i]] <- sobol_ci(indices[[i]], params = pops_params, type = "norm", conf = 0.95, second = FALSE, third = FALSE)
+  plot_name_1 <- paste("plot_scatter_", i,".jpg", sep="")
   jpeg(file = plot_name_1)
   plot_scatter(pops_matrices, pops_output, pops_n, pops_params)
   dev.off()
   
-  plot_name_2 <- paste("pot_sobol_", i,".jpg", sep="")
+  plot_name_2 <- paste("plot_sobol_", i,".jpg", sep="")
   jpeg(file = plot_name_2)
-  plot_sobol(pops_ci, dummy = pops_dummy_ci, type = 1)
+  plot_sobol(pops_ci[[i]], dummy = pops_dummy_ci[[i]], type = 1)
   dev.off()
 }
