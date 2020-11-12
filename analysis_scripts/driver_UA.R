@@ -190,9 +190,9 @@ data_list <- foreach (i=1:count) %dopar% {
   treatment <- raster::raster(nrows=100, ncols=100, xmn=0, ymn=0,
                    crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                    vals=1)
-  
-  raster::writeRaster(treatment, "treatments_file.tif", overwrite=TRUE)
-  treatments_file <- c("treatments_file.tif")
+  treatments_file <- c(paste("treatments_file_", i, ".tif", sep=""))
+  raster::writeRaster(treatment, treatments_file[[1]], overwrite=TRUE)
+  rm(treatment)
   treatment_method <- "ratio"
   # may just keep constant to match timestep of treatments
   pesticide_duration <- c(1)
@@ -253,6 +253,7 @@ data_list <- foreach (i=1:count) %dopar% {
   file.remove(temperature_coefficient_file)
   file.remove(precipitation_coefficient_file)
   file.remove(temperature_file)
+  file.remove(treatments_file)
   # cellStats(data$simulation_mean, 'mean')
   # cellStats(data$simulation_sd, 'mean')
   
