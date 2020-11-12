@@ -311,3 +311,9 @@ for ( i in params ) {
   plot_sobol(pops_ci[[i]], dummy = pops_dummy_ci[[i]], type = 1)
   dev.off()
 }
+
+
+save(indices, file="indices.Rdata")
+save(pops_dummy, file="pops_dummy.Rdata")
+save(pops_dummy_ci, file="pops_dummy_ci.Rdata")
+save(pops_ci, file="pops_ci.Rdata")

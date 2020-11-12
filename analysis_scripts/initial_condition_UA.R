@@ -280,11 +280,13 @@ for ( i in params ) {
   
   # pops_replicas <- sobol_replicas(pops_sens, pops_k, second=FALSE, third=FALSE)
   pops_dummy[[i]] <- sobol_dummy(pops_output, pops_params, pops_R, pops_n)
+  
   pops_dummy_ci[[i]] <- sobol_ci_dummy(pops_dummy[[i]], type= "norm", conf = 0.95)
   # compute confidence intervals
   # only works with 2+ params
   pops_ci[[i]] <- sobol_ci(indices[[i]], params = pops_params, type = "norm", conf = 0.95, second = FALSE, third = FALSE)
-  plot_name_1 <- paste("plot_scatter_", i,".jpg", sep="")
+  
+   plot_name_1 <- paste("plot_scatter_", i,".jpg", sep="")
   jpeg(file = plot_name_1)
   plot_scatter(pops_matrices, pops_output, pops_n, pops_params)
   dev.off()
@@ -294,3 +296,8 @@ for ( i in params ) {
   plot_sobol(pops_ci[[i]], dummy = pops_dummy_ci[[i]], type = 1)
   dev.off()
 }
+
+save(indices, file="indices.Rdata")
+save(pops_dummy, file="pops_dummy.Rdata")
+save(pops_dummy_ci, file="pops_dummy_ci.Rdata")
+save(pops_ci, file="pops_ci.Rdata")

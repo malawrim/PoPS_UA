@@ -7,6 +7,8 @@ library(raster)
 # call sobol_indices with results from pops_multirun
 # install.packages("sensobol")
 library(sensobol)
+library(foreach)
+library(doParallel)
 
 # create matrix of potential sd inputs for infected
 # inputs duplicated below
@@ -17,7 +19,7 @@ pops_k <- 15
 # matrix is of size n * 2k
 # matrix should be created in respect to pdf of param
 pops_matrices <- sobol_matrices(n = pops_n, k = pops_k, second = TRUE, third = TRUE)
-count <- c(1:nrow(pops_matrices))
+count <- nrow(pops_matrices)
 
 data_list <- list(list())
 # access element in 2D list data_list[[1]][1]
@@ -63,7 +65,11 @@ quarantine_areas_file <- ""
 use_quarantine <- FALSE
 use_spreadrates <- FALSE
 
-for ( i in count ) {
+numCores <- detectCores()
+cl <- makeCluster(numCores - 1)
+registerDoParallel(cl)
+
+data_list <- foreach (i=1:count) %dopar% {
   
   parameter_means <- c(
     pops_matrices[i,1],
@@ -73,7 +79,7 @@ for ( i in count ) {
     0,
     0)
   
-  infected <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
+  infected <- raster::raster(nrows=100, ncols=100, xmn=0, ymn=0,
                      crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                      vals=as.integer(stats::rnorm(16200, mean=0, sd=2)))
   infected[infected < 0] <- 0
@@ -81,30 +87,39 @@ for ( i in count ) {
   # plot(infected)
   # writeRaster(infected, "infected_file.tif", overwrite=TRUE)
   # probably don't want sd randomized #
-  infected_sd <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
+  infected_sd <- raster::raster(nrows=100, ncols=100, xmn=0, ymn=0,
                         crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                         vals=pops_matrices[i,5])
   # plot(infected_sd)
-  infected_stack <- stack(infected, infected_sd)
-  infected_brick <- brick(infected_stack)
+  infected_stack <- raster::stack(infected, infected_sd)
+  infected_brick <- raster::brick(infected_stack)
   # plot(infected_brick)
-  infected_file <- writeRaster(infected_brick, "infected_file.tif", format="GTiff", overwrite=TRUE)
+  infected_file <- paste("infected_file_", i, ".tif", sep="")
+  raster::writeRaster(infected_brick, infected_file, format="GTiff", overwrite=TRUE)
   # plot(infected_file)
-  infected_file <- "infected_file.tif"
+  rm(infected_stack)
+  rm(infected)
+  rm(infected_brick)
+  rm(infected_sd)
   
-  host <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
+  host <- raster::raster(nrows=100, ncols=100, xmn=0, ymn=0,
                  crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                  vals=as.integer(stats::rnorm(16200, mean=4, sd=1)))
-  host_sd <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
+  host_sd <- raster::raster(nrows=100, ncols=100, xmn=0, ymn=0,
                     crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                     vals=pops_matrices[i,6])
   # plot(host_sd)
-  host_stack <- stack(host, host_sd)
-  host_brick <- brick(host_stack)
+  host_stack <- raster::stack(host, host_sd)
+  host_brick <- raster::brick(host_stack)
   # plot(host_brick)
-  host_file <- writeRaster(host_brick, "host_file.tif", format="GTiff", overwrite=TRUE)
+  host_file <- paste("host_file_", i, ".tif", sep="")
+  # plot(host_brick)
+  raster::writeRaster(host_brick, host_file, format="GTiff", overwrite=TRUE)
   # plot(host_file)
-  host_file <- "host_file.tif"
+  rm(host)
+  rm(host_sd)
+  rm(host_stack)
+  rm(host_brick)
   # download.file("ftp://ftp.cpc.ncep.noaa.gov/GIS/USDM_Products/temp/total/daily/t.full.1stday_month_20130611.tif", "temp.tif", "auto", mode = "wb")
   # download.file("ftp://ftp.cpc.ncep.noaa.gov/GIS/USDM_Products/precip/total/daily/p.full.1stday_month_20130611.tif", "precip.tif", "auto", mode = "wb")
   # 
@@ -112,12 +127,14 @@ for ( i in count ) {
   # tif_name <- 'temp.tif'
   # temp <- raster(tif_name, values=TRUE)
   temp <-  as.logical(round(pops_matrices[i,7]))
-  temp_raster <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
+  temp_raster <- raster::raster(nrows=100, ncols=100, xmn=0, ymn=0,
                         crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                         vals=runif(16200, 0, 1))
-  temp_stack <- stack(replicate(12, temp_raster))
-  writeRaster(temp_stack, "temp_file.tif", type= "GTIFF", overwrite=TRUE)
-  temperature_coefficient_file <- 'temp_file.tif'
+  temp_stack <- raster::stack(replicate(12, temp_raster))
+  temperature_coefficient_file <- paste("temp_file_", i, ".tif", sep="")
+  raster::writeRaster(temp_stack, temperature_coefficient_file, type= "GTIFF", overwrite=TRUE)
+  rm(temp_raster)
+  rm(temp_stack)
   # values(temp2)
   # 
   # download.file("ftp://ftp.cpc.ncep.noaa.gov/GIS/USDM_Products/temp/total/daily/t.full.1stday_month_20130612.tif", "temp2.tif", "auto", mode = "wb")
@@ -130,12 +147,14 @@ for ( i in count ) {
   # tif_name <- 'precip.tif'
   # precip <- raster(tif_name, layer=0)
   precip <-  as.logical(round(pops_matrices[i,8]))
-  precip_raster <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
+  precip_raster <- raster::raster(nrows=100, ncols=100, xmn=0, ymn=0,
                           crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                           vals=runif(16200, 0, 1))
-  precip_stack <- stack(replicate(12, precip_raster))
-  writeRaster(precip_stack, "precip_file.tif", type= "GTIFF", overwrite=TRUE)
-  precipitation_coefficient_file <- 'precip_file.tif'
+  precip_stack <- raster::stack(replicate(12, precip_raster))
+  precipitation_coefficient_file <- paste("precip_file_", i, ".tif", sep="")
+  raster::writeRaster(precip_stack, precipitation_coefficient_file, type= "GTIFF", overwrite=TRUE)
+  rm(precip_raster)
+  rm(precip_stack)
   
   use_lethal_temperature <-  as.logical(round(pops_matrices[i,9]))
   # min temp map
@@ -144,12 +163,12 @@ for ( i in count ) {
   # min minimum temperature
   min_min_temp <- -20
   # denormalize the time lag value from pops_matrices
-  min_temp_raster <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
+  min_temp_raster <- raster::raster(nrows=100, ncols=100, xmn=0, ymn=0,
                             crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                             vals=(pops_matrices[i,10] * (max_min_temp - min_min_temp) + min_min_temp))
-  min_temp_stack <- stack(replicate(12, min_temp_raster))
-  writeRaster(min_temp_stack, "min_temperature_file.tif", type= "GTIFF", overwrite=TRUE)
-  temperature_file <- "min_temperature_file.tif"
+  min_temp_stack <- raster::stack(replicate(12, min_temp_raster))
+  temperature_file <- paste("min_temperature_file_", i, ".tif", sep="")
+  raster::writeRaster(min_temp_stack, temperature_file, type= "GTIFF", overwrite=TRUE)
   lethal_temperature <- -10
   lethal_temperature_month <- 1
   mortality_on <- as.logical(round(pops_matrices[i,11]))
@@ -167,13 +186,12 @@ for ( i in count ) {
   management <-  as.logical(round(pops_matrices[i,14]))
   treatment_dates <- c("2003-01-01")
   # one layer per timestep (0 or 1)
-  treatment <- raster(nrows=100, ncols=100, xmn=0, ymn=0,
+  treatment <- raster::raster(nrows=100, ncols=100, xmn=0, ymn=0,
                       crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                       vals=1)
-  
-  writeRaster(treatment, "treatments_file.tif", overwrite=TRUE)
-  treatments_file <- c("treatments_file.tif")
-  treatment_method <- "ratio"
+  treatments_file <- c( paste("treatments_file_", i, ".tif", sep=""))
+  raster::writeRaster(treatment, treatments_file[[1]], overwrite=TRUE)
+  treatment_method <- "atio"
   # may just keep constant to match timestep of treatments
   pesticide_duration <- c(1)
   pesticide_efficacy <- pops_matrices[i,15]
@@ -232,6 +250,12 @@ for ( i in count ) {
   
   # cellStats(data$simulation_mean, 'mean')
   # cellStats(data$simulation_sd, 'mean')
+  file.remove(host_file)
+  file.remove(temperature_coefficient_file)
+  file.remove(precipitation_coefficient_file)
+  file.remove(temperature_file)
+  file.remove(treatments_file)
+  file.remove(infected_file)
   
   # maybe just use these?
   # both have mean and standard deviation
@@ -243,6 +267,7 @@ for ( i in count ) {
   # save(data_sd0, file='data_sd0.RData')
   # save(data_sd0.5, file="data_sd0.5.RData")
 }
+stopCluster(cl)
 matrix_data_list <- matrix(unlist(data_list), nrow=length(data_list), byrow=TRUE)
 colnames(matrix_data_list) <- c("temp", "precip", "mortality_rate", "mortality_time_lag", "pesticide_efficacy")
 write.table(matrix_data_list, file = "matrix_data_list.csv")
@@ -284,3 +309,8 @@ for ( i in params ) {
   plot_sobol(pops_ci, dummy = pops_dummy_ci, type = 1)
   dev.off()
 }
+
+save(indices, file="indices.Rdata")
+save(pops_dummy, file="pops_dummy.Rdata")
+save(pops_dummy_ci, file="pops_dummy_ci.Rdata")
+save(pops_ci, file="pops_ci.Rdata")
