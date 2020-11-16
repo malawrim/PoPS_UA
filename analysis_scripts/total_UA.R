@@ -13,7 +13,7 @@ library(doParallel)
 # create matrix of potential sd inputs for infected
 # inputs duplicated below
 # sample size
-pops_n <- 1
+pops_n <- 500
 # number of inputs
 pops_k <- 15
 # matrix is of size n * 2k
@@ -22,6 +22,7 @@ pops_matrices <- sobol_matrices(n = pops_n, k = pops_k, second = TRUE, third = T
 count <- nrow(pops_matrices)
 
 data_list <- list(list())
+
 # access element in 2D list data_list[[1]][1]
 # access whole list in 2D list data_list[[1]]
 
@@ -70,6 +71,8 @@ cl <- makeCluster(numCores - 1)
 registerDoParallel(cl)
 
 data_list <- foreach (i=1:count) %dopar% {
+  max_dispersal_distance <-2
+  min_dispersal_distance <- 1
   
   parameter_means <- c(
     pops_matrices[i,1],
@@ -83,7 +86,7 @@ data_list <- foreach (i=1:count) %dopar% {
                      crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                      vals=as.integer(stats::rnorm(16200, mean=0, sd=2)))
   infected[infected < 0] <- 0
-  values(infected) <- round(values(infected), 0)
+  raster::values(infected) <- round(raster::values(infected), 0)
   # plot(infected)
   # writeRaster(infected, "infected_file.tif", overwrite=TRUE)
   # probably don't want sd randomized #
@@ -191,7 +194,7 @@ data_list <- foreach (i=1:count) %dopar% {
                       vals=1)
   treatments_file <- c( paste("treatments_file_", i, ".tif", sep=""))
   raster::writeRaster(treatment, treatments_file[[1]], overwrite=TRUE)
-  treatment_method <- "atio"
+  treatment_method <- "ratio"
   # may just keep constant to match timestep of treatments
   pesticide_duration <- c(1)
   pesticide_efficacy <- pops_matrices[i,15]
