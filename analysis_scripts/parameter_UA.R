@@ -235,8 +235,8 @@ pops_R <- 5000
 for ( i in params ) {
   pops_output <- matrix_data_list[,i]
   
-  plot_name <- paste("plot_uncertainty_", i,".jpg", sep="")
-  jpeg(file = plot_name)
+  plot_name <- paste("plot_uncertainty_", i,".pdf", sep="")
+  pdf(file = plot_name)
   plot_uncertainty(pops_output, pops_n)
   dev.off()
   
@@ -251,13 +251,13 @@ for ( i in params ) {
   # compute confidence intervals
   # only works with 2+ params
   pops_ci[[i]] <- sobol_ci(indices[[i]], params = pops_params, type = "norm", conf = 0.95, second = FALSE, third = FALSE)
-  plot_name_1 <- paste("plot_scatter_", i,".jpg", sep="")
-  jpeg(file = plot_name_1)
+  plot_name_1 <- paste("plot_scatter_", i,".pdf", sep="")
+  pdf(file = plot_name_1)
   plot_scatter(pops_matrices, pops_output, pops_n, pops_params)
   dev.off()
   
-  plot_name_2 <- paste("plot_sobol_", i,".jpg", sep="")
-  jpeg(file = plot_name_2)
+  plot_name_2 <- paste("plot_sobol_", i,".pdf", sep="")
+  pdf(file = plot_name_2)
   plot_sobol(pops_ci[[i]], dummy = pops_dummy_ci[[i]], type = 1)
   dev.off()
 }
