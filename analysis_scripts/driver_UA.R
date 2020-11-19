@@ -274,8 +274,9 @@ matrix_data_list <- matrix(unlist(data_list), nrow=length(data_list), byrow=TRUE
 colnames(matrix_data_list) <- c("temp", "precip", "mortality_rate", "mortality_time_lag", "pesticide_efficacy")
 write.table(matrix_data_list, file = "matrix_data_list.csv")
 
-pops_params <- c("temp", "precip", "mortality_rate", "mortality_time_lag", "pesticide_efficacy")
-params <- c(1:5)
+pops_params <- c("host", "temp", "precip", "lethal_temp", "min_temp", "mortality", "mortality_rate", "mortality_time_lag", "management", "pesticide_efficacy")
+
+params <- c(1:10)
 indices <- list(data.frame())
 pops_dummy <- list(data.frame())
 pops_dummy_ci <- list(data.frame())
