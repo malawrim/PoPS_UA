@@ -61,7 +61,7 @@ anthropogenic_kernel_type <- "cauchy"
 natural_dir <- "NONE"
 anthropogenic_dir <- "NONE"
 number_of_iterations <- 10
-number_of_cores <- NA
+number_of_cores <- 1
 
 random_seed <- NULL
 output_frequency <- "year"
@@ -266,12 +266,13 @@ data_list <- foreach (i=1:count) %dopar% {
 stopCluster(cl)
 
 matrix_data_list <- matrix(unlist(data_list), nrow=length(data_list), byrow=TRUE)
-colnames(matrix_data_list) <- c("host", "temp", "precip", "lethal_temp", "min_temp", "mortality", "mortality_rate", "mortality_time_lag", "management", "pesticide_efficacy")
-write.table(matrix_data_list, file = "matrix_data_list.csv")
+# colnames(matrix_data_list) <- c("host", "temp", "precip", "lethal_temp", "min_temp", "mortality", "mortality_rate", "mortality_time_lag", "management", "pesticide_efficacy")
+# write.table(matrix_data_list, file = "matrix_data_list.csv")
 
-pops_params <- c("host", "temp", "precip", "lethal_temp", "min_temp", "mortality", "mortality_rate", "mortality_time_lag", "management", "pesticide_efficacy")
+# pops_params <- c("host", "temp", "precip", "lethal_temp", "min_temp", "mortality", "mortality_rate", "mortality_time_lag", "management", "pesticide_efficacy")
 
-params <- c(1:10)
+pops_params <-c("infected_mean", "infected_sd", "area_infected_mean", "area_infected_sd")
+params <- c(1:4)
 indices <- list(data.frame())
 pops_dummy <- list(data.frame())
 pops_dummy_ci <- list(data.frame())
@@ -281,10 +282,10 @@ pops_R <- 5000
 for ( i in params ) {
   pops_output <- matrix_data_list[,i]
 
-  plot_name <- paste("driver_plot_uncertainty_", i,".pdf", sep="")
-  pdf(file = plot_name)
-  plot_uncertainty(pops_output, pops_n)
-  dev.off()
+#  plot_name <- paste("driver_plot_uncertainty_", i,".pdf", sep="")
+#  pdf(file = plot_name)
+#  plot_uncertainty(pops_output, pops_n)
+#  dev.off()
   
   # Compute the Sobol' indices:
   # will have to separate indices for each of the four results in the output list (num infect mean vs sd)
@@ -297,15 +298,15 @@ for ( i in params ) {
   # compute confidence intervals
   # only works with 2+ params
   pops_ci[[i]] <- sobol_ci(indices[[i]], params = pops_params, type = "norm", conf = 0.95, second = TRUE, third = TRUE)
-  plot_name_1 <- paste("driver_plot_scatter_", i,".pdf", sep="")
-  pdf(file = plot_name_1)
-  plot_scatter(pops_matrices, pops_output, pops_n, pops_params)
-  dev.off()
+#  plot_name_1 <- paste("driver_plot_scatter_", i,".pdf", sep="")
+#  pdf(file = plot_name_1)
+#  plot_scatter(pops_matrices, pops_output, pops_n, pops_params)
+#  dev.off()
 
-  plot_name_2 <- paste("driver_plot_sobol_", i,".pdf", sep="")
-  pdf(file = plot_name_2)
-  plot_sobol(pops_ci[[i]], dummy = pops_dummy_ci[[i]], type = 1)
-  dev.off()
+#  plot_name_2 <- paste("driver_plot_sobol_", i,".pdf", sep="")
+#  pdf(file = plot_name_2)
+#  plot_sobol(pops_ci[[i]], dummy = pops_dummy_ci[[i]], type = 1)
+#  dev.off()
 }
 
 save(indices, file="driver_indices.Rdata")
