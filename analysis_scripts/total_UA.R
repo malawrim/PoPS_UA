@@ -97,7 +97,7 @@ data_list <- foreach (i=1:count) %dopar% {
   infected_stack <- raster::stack(infected, infected_sd)
   infected_brick <- raster::brick(infected_stack)
   # plot(infected_brick)
-  infected_file <- paste("infected_file_", i, ".tif", sep="")
+  infected_file <- paste("total_infected_file_", i, ".tif", sep="")
   raster::writeRaster(infected_brick, infected_file, format="GTiff", overwrite=TRUE)
   # plot(infected_file)
   rm(infected_stack)
@@ -115,7 +115,7 @@ data_list <- foreach (i=1:count) %dopar% {
   host_stack <- raster::stack(host, host_sd)
   host_brick <- raster::brick(host_stack)
   # plot(host_brick)
-  host_file <- paste("host_file_", i, ".tif", sep="")
+  host_file <- paste("total_host_file_", i, ".tif", sep="")
   # plot(host_brick)
   raster::writeRaster(host_brick, host_file, format="GTiff", overwrite=TRUE)
   # plot(host_file)
@@ -134,7 +134,7 @@ data_list <- foreach (i=1:count) %dopar% {
                         crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                         vals=runif(16200, 0, 1))
   temp_stack <- raster::stack(replicate(12, temp_raster))
-  temperature_coefficient_file <- paste("temp_file_", i, ".tif", sep="")
+  temperature_coefficient_file <- paste("total_temp_file_", i, ".tif", sep="")
   raster::writeRaster(temp_stack, temperature_coefficient_file, type= "GTIFF", overwrite=TRUE)
   rm(temp_raster)
   rm(temp_stack)
@@ -154,7 +154,7 @@ data_list <- foreach (i=1:count) %dopar% {
                           crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                           vals=runif(16200, 0, 1))
   precip_stack <- raster::stack(replicate(12, precip_raster))
-  precipitation_coefficient_file <- paste("precip_file_", i, ".tif", sep="")
+  precipitation_coefficient_file <- paste("total_precip_file_", i, ".tif", sep="")
   raster::writeRaster(precip_stack, precipitation_coefficient_file, type= "GTIFF", overwrite=TRUE)
   rm(precip_raster)
   rm(precip_stack)
@@ -170,7 +170,7 @@ data_list <- foreach (i=1:count) %dopar% {
                             crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                             vals=(pops_matrices[i,10] * (max_min_temp - min_min_temp) + min_min_temp))
   min_temp_stack <- raster::stack(replicate(12, min_temp_raster))
-  temperature_file <- paste("min_temperature_file_", i, ".tif", sep="")
+  temperature_file <- paste("total_min_temperature_file_", i, ".tif", sep="")
   raster::writeRaster(min_temp_stack, temperature_file, type= "GTIFF", overwrite=TRUE)
   lethal_temperature <- -10
   lethal_temperature_month <- 1
@@ -192,7 +192,7 @@ data_list <- foreach (i=1:count) %dopar% {
   treatment <- raster::raster(nrows=100, ncols=100, xmn=0, ymn=0,
                       crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                       vals=1)
-  treatments_file <- c( paste("treatments_file_", i, ".tif", sep=""))
+  treatments_file <- c( paste("total_treatments_file_", i, ".tif", sep=""))
   raster::writeRaster(treatment, treatments_file[[1]], overwrite=TRUE)
   treatment_method <- "ratio"
   # may just keep constant to match timestep of treatments
@@ -272,11 +272,15 @@ data_list <- foreach (i=1:count) %dopar% {
 }
 stopCluster(cl)
 matrix_data_list <- matrix(unlist(data_list), nrow=length(data_list), byrow=TRUE)
-colnames(matrix_data_list) <- c("temp", "precip", "mortality_rate", "mortality_time_lag", "pesticide_efficacy")
+colnames(matrix_data_list) <- c("reproductive_rate", "natural_dispersal_distance", "percent_natural_dispersal",
+                                "anthropogenic_dispersal_distance", "infected", "host", "temp", "precip", "lethal_temp", 
+                                "min_temp", "mortality", "mortality_rate", "mortality_time_lag", "management", "pesticide_efficacy")
 write.table(matrix_data_list, file = "matrix_data_list.csv")
 
-pops_params <- c("temp", "precip", "mortality_rate", "mortality_time_lag", "pesticide_efficacy")
-params <- c(1:5)
+pops_params <- c("reproductive_rate", "natural_dispersal_distance", "percent_natural_dispersal",
+                 "anthropogenic_dispersal_distance", "infected", "host", "temp", "precip", 
+                 "lethal_temp", "min_temp", "mortality", "mortality_rate", "mortality_time_lag", "management", "pesticide_efficacy")
+params <- c(1:15)
 indices <- list(data.frame())
 pops_dummy <- list(data.frame())
 pops_dummy_ci <- list(data.frame())
@@ -286,7 +290,7 @@ pops_R <- 5000
 for ( i in params ) {
   pops_output <- matrix_data_list[,i]
   
-  plot_name <- paste("pot_uncertainty_", i,".pdf", sep="")
+  plot_name <- paste("total_plot_uncertainty_", i,".pdf", sep="")
   pdf(file = plot_name)
   plot_uncertainty(pops_output, pops_n)
   dev.off()
@@ -301,19 +305,19 @@ for ( i in params ) {
   pops_dummy_ci[[i]] <- sobol_ci_dummy(pops_dummy, type= "norm", conf = 0.95)
   # compute confidence intervals
   # only works with 2+ params
-  pops_ci[[i]] <- sobol_ci(pops_sens, params = pops_params, type = "norm", conf = 0.95, second = FALSE, third = FALSE)
-  plot_name_1 <- paste("pot_scatter_", i,".pdf", sep="")
+  pops_ci[[i]] <- sobol_ci(pops_sens, params = pops_params, type = "norm", conf = 0.95, second = TRUE, third = TRUE)
+  plot_name_1 <- paste("total_plot_scatter_", i,".pdf", sep="")
   pdf(file = plot_name_1)
   plot_scatter(pops_matrices, pops_output, pops_n, pops_params)
   dev.off()
   
-  plot_name_2 <- paste("pot_sobol_", i,".pdf", sep="")
+  plot_name_2 <- paste("total_plot_sobol_", i,".pdf", sep="")
   pdf(file = plot_name_2)
   plot_sobol(pops_ci, dummy = pops_dummy_ci, type = 1)
   dev.off()
 }
 
-save(indices, file="indices.Rdata")
-save(pops_dummy, file="pops_dummy.Rdata")
-save(pops_dummy_ci, file="pops_dummy_ci.Rdata")
-save(pops_ci, file="pops_ci.Rdata")
+save(indices, file= "total_indices.Rdata")
+save(pops_dummy, file= "total_pops_dummy.Rdata")
+save(pops_dummy_ci, file= "total_pops_dummy_ci.Rdata")
+save(pops_ci, file= "total_pops_ci.Rdata")
