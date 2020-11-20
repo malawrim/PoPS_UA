@@ -110,7 +110,7 @@ data_list <- foreach (i=1:count) %dopar% {
   # plot(host_sd)
   host_stack <- raster::stack(host, host_sd)
   host_brick <- raster::brick(host_stack)
-  host_file <- paste("host_file_", i, ".tif", sep="")
+  host_file <- paste("driver_host_file_", i, ".tif", sep="")
   # plot(host_brick)
   raster::writeRaster(host_brick, host_file, format="GTiff", overwrite=TRUE)
   # plot(host_file)
@@ -129,7 +129,7 @@ data_list <- foreach (i=1:count) %dopar% {
                     crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                     vals=runif(16200, 0, 1))
   temp_stack <- raster::stack(replicate(12, temp_raster))
-  temperature_coefficient_file <- paste("temp_file_", i, ".tif", sep="")
+  temperature_coefficient_file <- paste("driver_temp_file_", i, ".tif", sep="")
   raster::writeRaster(temp_stack, temperature_coefficient_file, type= "GTIFF", overwrite=TRUE)
   rm(temp_raster)
   rm(temp_stack)
@@ -149,7 +149,7 @@ data_list <- foreach (i=1:count) %dopar% {
                  crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                  vals=runif(16200, 0, 1))
   precip_stack <- raster::stack(replicate(12, precip_raster))
-  precipitation_coefficient_file <- paste("precip_file_", i, ".tif", sep="")
+  precipitation_coefficient_file <- paste("driver_precip_file_", i, ".tif", sep="")
   raster::writeRaster(precip_stack, precipitation_coefficient_file, type= "GTIFF", overwrite=TRUE)
   rm(precip_raster)
   rm(precip_stack)
@@ -165,7 +165,7 @@ data_list <- foreach (i=1:count) %dopar% {
                           crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                           vals=(pops_matrices[i,5] * (max_min_temp - min_min_temp) + min_min_temp))
   min_temp_stack <- raster::stack(replicate(12, min_temp_raster))
-  temperature_file <- paste("min_temperature_file_", i, ".tif", sep="")
+  temperature_file <- paste("driver_min_temperature_file_", i, ".tif", sep="")
   raster::writeRaster(min_temp_stack, temperature_file, type= "GTIFF", overwrite=TRUE)
   rm(min_temp_raster)
   rm(min_temp_stack)
@@ -190,7 +190,7 @@ data_list <- foreach (i=1:count) %dopar% {
   treatment <- raster::raster(nrows=100, ncols=100, xmn=0, ymn=0,
                    crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                    vals=1)
-  treatments_file <- c(paste("treatments_file_", i, ".tif", sep=""))
+  treatments_file <- c(paste("driver_treatments_file_", i, ".tif", sep=""))
   raster::writeRaster(treatment, treatments_file[[1]], overwrite=TRUE)
   rm(treatment)
   treatment_method <- "ratio"
@@ -261,17 +261,12 @@ data_list <- foreach (i=1:count) %dopar% {
   # both have mean and standard deviation
   # order: number of infected mean, number of infected sd, area infected mean, area infected sd
   list_output[[i]] <- c(data$number_infecteds[1], data$number_infecteds[2], data$infected_areas[1], data$infected_areas[2])
-  
-  # save(data_1, file="data_1.RData")
-  # save(data_sd1, file="data_sd1.RData")
-  # save(data_sd0, file='data_sd0.RData')
-  # save(data_sd0.5, file="data_sd0.5.RData")
 }
 
 stopCluster(cl)
 
 matrix_data_list <- matrix(unlist(data_list), nrow=length(data_list), byrow=TRUE)
-colnames(matrix_data_list) <- c("temp", "precip", "mortality_rate", "mortality_time_lag", "pesticide_efficacy")
+colnames(matrix_data_list) <- c("host", "temp", "precip", "lethal_temp", "min_temp", "mortality", "mortality_rate", "mortality_time_lag", "management", "pesticide_efficacy")
 write.table(matrix_data_list, file = "matrix_data_list.csv")
 
 pops_params <- c("host", "temp", "precip", "lethal_temp", "min_temp", "mortality", "mortality_rate", "mortality_time_lag", "management", "pesticide_efficacy")
@@ -286,7 +281,7 @@ pops_R <- 5000
 for ( i in params ) {
   pops_output <- matrix_data_list[,i]
 
-  plot_name <- paste("plot_uncertainty_", i,".pdf", sep="")
+  plot_name <- paste("driver_plot_uncertainty_", i,".pdf", sep="")
   pdf(file = plot_name)
   plot_uncertainty(pops_output, pops_n)
   dev.off()
@@ -301,20 +296,19 @@ for ( i in params ) {
   pops_dummy_ci[[i]] <- sobol_ci_dummy(pops_dummy[[i]], type= "norm", conf = 0.95)
   # compute confidence intervals
   # only works with 2+ params
-  pops_ci[[i]] <- sobol_ci(indices[[i]], params = pops_params, type = "norm", conf = 0.95, second = FALSE, third = FALSE)
-  plot_name_1 <- paste("plot_scatter_", i,".pdf", sep="")
+  pops_ci[[i]] <- sobol_ci(indices[[i]], params = pops_params, type = "norm", conf = 0.95, second = TRUE, third = TRUE)
+  plot_name_1 <- paste("driver_plot_scatter_", i,".pdf", sep="")
   pdf(file = plot_name_1)
   plot_scatter(pops_matrices, pops_output, pops_n, pops_params)
   dev.off()
 
-  plot_name_2 <- paste("plot_sobol_", i,".pdf", sep="")
+  plot_name_2 <- paste("driver_plot_sobol_", i,".pdf", sep="")
   pdf(file = plot_name_2)
   plot_sobol(pops_ci[[i]], dummy = pops_dummy_ci[[i]], type = 1)
   dev.off()
 }
 
-
-save(indices, file="indices.Rdata")
-save(pops_dummy, file="pops_dummy.Rdata")
-save(pops_dummy_ci, file="pops_dummy_ci.Rdata")
-save(pops_ci, file="pops_ci.Rdata")
+save(indices, file="driver_indices.Rdata")
+save(pops_dummy, file="driver_pops_dummy.Rdata")
+save(pops_dummy_ci, file="driver_pops_dummy_ci.Rdata")
+save(pops_ci, file="driver_pops_ci.Rdata")
