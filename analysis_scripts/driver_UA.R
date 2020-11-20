@@ -266,8 +266,8 @@ data_list <- foreach (i=1:count) %dopar% {
 stopCluster(cl)
 
 matrix_data_list <- matrix(unlist(data_list), nrow=length(data_list), byrow=TRUE)
-colnames(matrix_data_list) <- c("host", "temp", "precip", "lethal_temp", "min_temp", "mortality", "mortality_rate", "mortality_time_lag", "management", "pesticide_efficacy")
-write.table(matrix_data_list, file = "matrix_data_list.csv")
+# colnames(matrix_data_list) <- c("host", "temp", "precip", "lethal_temp", "min_temp", "mortality", "mortality_rate", "mortality_time_lag", "management", "pesticide_efficacy")
+# write.table(matrix_data_list, file = "matrix_data_list.csv")
 
 pops_params <- c("host", "temp", "precip", "lethal_temp", "min_temp", "mortality", "mortality_rate", "mortality_time_lag", "management", "pesticide_efficacy")
 
