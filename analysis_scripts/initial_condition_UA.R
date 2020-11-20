@@ -127,7 +127,7 @@ data_list <- foreach (i=1:count) %dopar% {
   # plot(infected_sd)
   infected_stack <- raster::stack(infected, infected_sd)
   infected_brick <- raster::brick(infected_stack)
-  infected_file <- paste("infected_file_", i, ".tif", sep="")
+  infected_file <- paste("ic_infected_file_", i, ".tif", sep="")
   # plot(infected_brick)
   raster::writeRaster(infected_brick, infected_file, format="GTiff", overwrite=TRUE)
   # plot(infected_file)
@@ -147,7 +147,7 @@ data_list <- foreach (i=1:count) %dopar% {
   host_stack <- raster::stack(host, host_sd)
   host_brick <- raster::brick(host_stack)
   # plot(host_brick)
-  host_file <- paste("host_file_", i, ".tif", sep="")
+  host_file <- paste("ic_host_file_", i, ".tif", sep="")
   raster::writeRaster(host_brick, host_file, format="GTiff", overwrite=TRUE)
   # plot(host_file)
   
@@ -158,7 +158,7 @@ data_list <- foreach (i=1:count) %dopar% {
   total_populations <- raster::raster(nrows=100, ncols=100, xmn=0, ymn=0,
                               crs="+proj=longlat +datum=WGS84 +no_defs", resolution=1,
                               vals=9)
-  total_populations_file <- paste("total_populations_file_", i, ".tif", sep="")
+  total_populations_file <- paste("ic_total_populations_file_", i, ".tif", sep="")
   raster::writeRaster(total_populations, total_populations_file, overwrite=TRUE)
   rm(total_populations)
   # plot(total_populations)
@@ -268,7 +268,7 @@ pops_R <- 5000
 for ( i in params ) {
   pops_output <- matrix_data_list[,i]
   
-  plot_name <- paste("plot_uncertainty_", i,".pdf", sep="")
+  plot_name <- paste("ic_plot_uncertainty_", i,".pdf", sep="")
   pdf(file = plot_name)
   plot_uncertainty(pops_output, pops_n)
   dev.off()
@@ -286,18 +286,18 @@ for ( i in params ) {
   # only works with 2+ params
   pops_ci[[i]] <- sobol_ci(indices[[i]], params = pops_params, type = "norm", conf = 0.95, second = FALSE, third = FALSE)
   
-  plot_name_1 <- paste("plot_scatter_", i,".pdf", sep="")
+  plot_name_1 <- paste("ic_plot_scatter_", i,".pdf", sep="")
   pdf(file = plot_name_1)
   plot_scatter(pops_matrices, pops_output, pops_n, pops_params)
   dev.off()
   
-  plot_name_2 <- paste("plot_sobol_", i,".pdf", sep="")
+  plot_name_2 <- paste("ic_plot_sobol_", i,".pdf", sep="")
   pdf(file = plot_name_2)
   plot_sobol(pops_ci[[i]], dummy = pops_dummy_ci[[i]], type = 1)
   dev.off()
 }
 
-save(indices, file="indices.Rdata")
-save(pops_dummy, file="pops_dummy.Rdata")
-save(pops_dummy_ci, file="pops_dummy_ci.Rdata")
-save(pops_ci, file="pops_ci.Rdata")
+save(indices, file="ic_indices.Rdata")
+save(pops_dummy, file="ic_pops_dummy.Rdata")
+save(pops_dummy_ci, file="ic_pops_dummy_ci.Rdata")
+save(pops_ci, file="ic_pops_ci.Rdata")
