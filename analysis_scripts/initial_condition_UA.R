@@ -53,7 +53,7 @@ anthropogenic_kernel_type <- "cauchy"
 natural_dir <- "NONE"
 anthropogenic_dir <- "NONE"
 number_of_iterations <- 10
-number_of_cores <- NA
+number_of_cores <- 1
 pesticide_duration <- 0
 pesticide_efficacy <- 1
 random_seed <- NULL
@@ -256,7 +256,7 @@ data_list <- foreach (i=1:count) %dopar% {
 stopCluster(cl)
 matrix_data_list <- matrix(unlist(data_list), nrow=length(data_list), byrow=TRUE)
 
-pops_params <- c("infected_mean", "infected_sd", "area_infected_mean", "area_infected_sd")
+pops_params <- c("infected", "host")
 
 params <- c(1:4)
 indices <- list(data.frame())
@@ -297,7 +297,7 @@ for ( i in params ) {
   # dev.off()
 }
 
-save(indices, file="ic_indices.Rdata")
-save(pops_dummy, file="ic_pops_dummy.Rdata")
-save(pops_dummy_ci, file="ic_pops_dummy_ci.Rdata")
-save(pops_ci, file="ic_pops_ci.Rdata")
+save(indices, file = "ic_indices.Rdata")
+save(pops_dummy, file = "ic_pops_dummy.Rdata")
+save(pops_dummy_ci, file = "ic_pops_dummy_ci.Rdata")
+save(pops_ci, file = "ic_pops_ci.Rdata")

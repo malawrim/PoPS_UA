@@ -48,7 +48,7 @@ anthropogenic_kernel_type <- "cauchy"
 natural_dir <- "NONE"
 anthropogenic_dir <- "NONE"
 number_of_iterations <- 10
-number_of_cores <- NA
+number_of_cores <- 1
 
 random_seed <- NULL
 output_frequency <- "year"
@@ -67,7 +67,7 @@ use_quarantine <- FALSE
 use_spreadrates <- FALSE
 
 numCores <- detectCores()
-cl <- makeCluster(numCores - 1)
+cl <- makeCluster(numCores)
 registerDoParallel(cl)
 
 data_list <- foreach (i=1:count) %dopar% {
@@ -272,7 +272,9 @@ data_list <- foreach (i=1:count) %dopar% {
 }
 stopCluster(cl)
 
-pops_params <- c("infected_mean", "infected_sd", "area_infected_mean", "area_infected_sd")
+pops_params <- c("reproductive_rate", "natural_dispersal_distance", "percent_natural_dispersal",
+                 "anthropogenic_dispersal_distance", "infected", "host", "temp", "precip", 
+                 "lethal_temp", "min_temp", "mortality", "mortality_rate", "mortality_time_lag", "management", "pesticide_efficacy")
 params <- c(1:4)
 indices <- list(data.frame())
 pops_dummy <- list(data.frame())

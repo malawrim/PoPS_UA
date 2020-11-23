@@ -73,7 +73,7 @@ anthropogenic_kernel_type <- "cauchy"
 natural_dir <- "NONE"
 anthropogenic_dir <- "NONE"
 number_of_iterations <- 10
-number_of_cores <- NA
+number_of_cores <- 1
 pesticide_duration <- 0
 pesticide_efficacy <- 1
 random_seed <- NULL
@@ -102,7 +102,7 @@ list_output <- list(list())
 # access element in 2D list data_list[[1]][1]
 # access whole list in 2D list data_list[[1]]
 numCores <- detectCores()
-cl <- makeCluster(numCores - 1)
+cl <- makeCluster(numCores)
 registerDoParallel(cl)
 data_list <- foreach (i=1:count) %dopar% {
   # on each loop get new host/precip/etc map
@@ -223,7 +223,8 @@ data_list <- foreach (i=1:count) %dopar% {
 stopCluster(cl)
 matrix_data_list <- matrix(unlist(data_list), nrow=length(data_list), byrow=TRUE)
 
-pops_params <-c("infected_mean", "infected_sd", "area_infected_mean", "area_infected_sd")
+pops_params <-c("reproductive_rate", "natural_dispersal_distance", "percent_natural_dispersal",
+                "anthropogenic_dispersal_distance")
 params <- c(1:4)
 
 indices <- list(data.frame())

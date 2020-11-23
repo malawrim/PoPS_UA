@@ -96,7 +96,7 @@ use_spreadrates <- FALSE
 #                          FALSE, TRUE, TRUE, TRUE,
 #                          TRUE, TRUE, TRUE, TRUE), nrow=16, ncol=4, byrow=TRUE)
 numCores <- detectCores()
-cl <- makeCluster(numCores - 1)
+cl <- makeCluster(numCores)
 registerDoParallel(cl)
 
 data_list <- foreach (i=1:count) %dopar% {
@@ -271,7 +271,7 @@ matrix_data_list <- matrix(unlist(data_list), nrow=length(data_list), byrow=TRUE
 
 # pops_params <- c("host", "temp", "precip", "lethal_temp", "min_temp", "mortality", "mortality_rate", "mortality_time_lag", "management", "pesticide_efficacy")
 
-pops_params <-c("infected_mean", "infected_sd", "area_infected_mean", "area_infected_sd")
+pops_params <-c("host", "temp", "precip", "lethal_temp", "min_temp", "mortality", "mortality_rate", "mortality_time_lag", "management", "pesticide_efficacy")
 params <- c(1:4)
 indices <- list(data.frame())
 pops_dummy <- list(data.frame())
